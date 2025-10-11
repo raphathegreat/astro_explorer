@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Logs
+*.log
+dashboard_application.log
+user_interactions.log
+data_processing.log
+app_output.log
+
+# Cache and temporary files
+*.cache
+*.tmp
+*.temp
+cache/
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data files (exclude large photo sets to keep repository size manageable)
+photos-1/
+photos-2/
+photos-3/
+photos-4/
+# Keep photos-sample/ as minimal sample data (5 images only)
+# *.jpg
+# *.jpeg
+# *.png
+
+# Version control backups (local only)
+versions/
+archive/
+
+# Large duplicate files that bloat the repository
+# These folders contain multiple copies of the same files
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment variables
+.env
+.env.local
+.env.*.local

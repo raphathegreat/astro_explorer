@@ -1,0 +1,33 @@
+# Testing dependencies for ISS Speed Analysis Dashboard
+
+# Core testing framework
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-mock>=3.10.0
+pytest-timeout>=2.1.0
+
+# Test utilities
+unittest-mock>=1.0.1
+coverage>=7.0.0
+
+# Web testing (for frontend tests)
+selenium>=4.0.0
+webdriver-manager>=3.8.0
+
+# Performance testing
+pytest-benchmark>=4.0.0
+
+# Data validation
+jsonschema>=4.0.0
+
+# Image processing for tests
+opencv-python>=4.5.0
+numpy>=1.21.0
+Pillow>=9.0.0
+
+# Flask testing
+flask-testing>=0.8.0
+
+# Mock and fixtures
+factory-boy>=3.2.0
+faker>=18.0.0
