@@ -1,0 +1,9 @@
+- description: |
+    Before making any change to a file, first create a backup copy in the
+    a 'backup' directory with a date-time suffix <YYYYMMDD-HHmmss>.
+    Example:  app.py  →  app.20251008-203045.py
+    If a backup path already exists, append _2, _3, etc.
+    Do not place backups inside .git/ or node_modules/.
+  globs:
+    - "**/*"
+  alwaysApply: true

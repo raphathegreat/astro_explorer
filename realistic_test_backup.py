@@ -6,18 +6,31 @@ This provides real code coverage by testing the functions that actually exist.
 
 DEVELOPMENT RULES:
 =================
-See DEVELOPMENT_RULES.md for complete development guidelines and rules.
+1. Test-Driven Development (TDD):
+   - Create test cases before writing code
+   - Execute tests to validate the code
+   - Run the full test pack and ensure it's updated
+   - Never amend tests to make code pass - tests define requirements
 
-Key Rules:
-- Rule 1: Test-Driven Development (TDD) - Create tests before code
-- Rule 2: Version Archiving - Archive working versions
-- Rule 3: Test Pack - Use realistic_test.py as the designated test pack
-- Rule 4: Cache Maintenance - Update caching for Section 2 changes
-- Rule 5: Issue Investigation Protocol - Always check logs when user reports issues
-- Rule 6: GSD Configuration Default Behavior - Disabled by default
-- Rule 7: Filter Application Logic - Only send enabled filters
+2. Version Archiving:
+   - Archive changed versions in historic folder for easy reversion
+   - Maintain organized archive structure
 
-For detailed explanations and implementation guidelines, refer to DEVELOPMENT_RULES.md
+3. Test Pack:
+   - realistic_test.py is the designated test pack
+   - Execute and update it with new test cases
+   - Use it to validate all changes
+
+4. Cache Maintenance for Section 2 Changes:
+   - When making changes to section 2 (algorithm parameters, processing options, 
+     or any configuration that affects data processing), the caching system must 
+     be updated accordingly if required
+   - This includes:
+     * Updating cache key generation to include new parameters
+     * Ensuring cache invalidation works with new parameter combinations
+     * Testing cache functionality with the new parameters
+     * Updating the comprehensive cache tests to cover new parameter combinations
+   - The cache system must remain consistent with all section 2 functionality
 """
 
 import sys
@@ -1958,18 +1971,8 @@ class TestCleanVersion(unittest.TestCase):
         # Calculate average speed for each pair
         pair_averages = [statistics.mean(pair_speeds[pair_idx]) for pair_idx in pair_speeds]
         pair_averages_rounded = [round(avg, 1) for avg in pair_averages]
-        # Calculate pair_mode with improved logic
-        if pair_averages_rounded:
-            most_common = Counter(pair_averages_rounded).most_common(1)
-            if most_common and most_common[0][1] > 1:
-                # There is a truly most common value
-                pair_mode = most_common[0][0]
-            else:
-                # All values are unique, find the one closest to the mean
-                pair_mean = statistics.mean(pair_averages)
-                pair_mode = min(pair_averages_rounded, key=lambda x: abs(x - pair_mean))
-        else:
-            pair_mode = 0        
+        pair_mode = Counter(pair_averages_rounded).most_common(1)[0][0]
+        
         return {
             'mean': mean,
             'median': median,
@@ -2026,18 +2029,8 @@ def _calculate_statistics_from_matches(matches):
     # Calculate average speed for each pair
     pair_averages = [statistics.mean(pair_speeds[pair_idx]) for pair_idx in pair_speeds]
     pair_averages_rounded = [round(avg, 1) for avg in pair_averages]
-    # Calculate pair_mode with improved logic
-    if pair_averages_rounded:
-        most_common = Counter(pair_averages_rounded).most_common(1)
-        if most_common and most_common[0][1] > 1:
-            # There is a truly most common value
-            pair_mode = most_common[0][0]
-        else:
-            # All values are unique, find the one closest to the mean
-            pair_mean = statistics.mean(pair_averages)
-            pair_mode = min(pair_averages_rounded, key=lambda x: abs(x - pair_mean))
-    else:
-        pair_mode = 0    
+    pair_mode = Counter(pair_averages_rounded).most_common(1)[0][0] if pair_averages_rounded else 0
+    
     return {
         'mean': mean,
         'median': median,
@@ -2084,7 +2077,6 @@ def _calculate_statistics_from_matches(matches):
     # Pair mode speed: the most average pair speed at one decimal place
     # Group matches by pair and calculate average speed per pair
     pair_speeds = {}
-    # Calculate pair_mode with improved logic
     for match in matches:
         pair_idx = match.get('pair_index', 0)
         speed = match.get('speed', 0)
@@ -2094,38 +2086,9 @@ def _calculate_statistics_from_matches(matches):
     
     # Calculate average speed for each pair
     pair_averages = [statistics.mean(pair_speeds[pair_idx]) for pair_idx in pair_speeds]
-    pair_averages_rounded = [round(avg, 1) for avg in pair_averages]    if pair_averages_rounded:
-        most_common = Counter(pair_averages_rounded).most_common(1)
-        if most_common and most_common[0][1] > 1:
-            # There is a truly most common value
-            pair_mode = most_common[0][0]
-        else:
-            # All values are unique, find the one closest to the mean
-            pair_mean = statistics.mean(pair_averages)
-            pair_mode = min(pair_averages_rounded, key=lambda x: abs(x - pair_mean))
-    else:
-        pair_mode = 0
-        pair_idx = match.get('pair_index', 0)
-        speed = match.get('speed', 0)
-        if pair_idx not in pair_speeds:
-            pair_speeds[pair_idx] = []
-        pair_speeds[pair_idx].append(speed)
-    
-    # Calculate average speed for each pair
-    pair_averages = [statistics.mean(pair_speeds[pair_idx]) for pair_idx in pair_speeds]
     pair_averages_rounded = [round(avg, 1) for avg in pair_averages]
-    # Calculate pair_mode with improved logic
-    if pair_averages_rounded:
-        most_common = Counter(pair_averages_rounded).most_common(1)
-        if most_common and most_common[0][1] > 1:
-            # There is a truly most common value
-            pair_mode = most_common[0][0]
-        else:
-            # All values are unique, find the one closest to the mean
-            pair_mean = statistics.mean(pair_averages)
-            pair_mode = min(pair_averages_rounded, key=lambda x: abs(x - pair_mean))
-    else:
-        pair_mode = 0    
+    pair_mode = Counter(pair_averages_rounded).most_common(1)[0][0] if pair_averages_rounded else 0
+    
     return {
         'mean': mean,
         'median': median,
@@ -3818,18 +3781,7 @@ class TestCleanVersion(unittest.TestCase):
         # Total matches: total number of matches across all the pairs
         total_matches = len(matches)
         
-        # Calculate pair_mode with improved logic
-        if pair_averages_rounded:
-            most_common = Counter(pair_averages_rounded).most_common(1)
-            if most_common and most_common[0][1] > 1:
-                # There is a truly most common value
-                pair_mode = most_common[0][0]
-            else:
-                # All values are unique, find the one closest to the mean
-                pair_mean = statistics.mean(pair_averages)
-                pair_mode = min(pair_averages_rounded, key=lambda x: abs(x - pair_mean))
-        else:
-            pair_mode = 0
+        # Total pairs: How many pairs are processed
         total_pairs = len(set(match.get('pair_index', 0) for match in matches))
         
         # Match mode speed: the most common speed at one decimal place from all the matches from all the pairs
@@ -3839,18 +3791,7 @@ class TestCleanVersion(unittest.TestCase):
         # Pair mode speed: the most average pair speed at one decimal place
         # Group matches by pair and calculate average speed per pair
         pair_speeds = {}
-        # Calculate pair_mode with improved logic
-        if pair_averages_rounded:
-            most_common = Counter(pair_averages_rounded).most_common(1)
-            if most_common and most_common[0][1] > 1:
-                # There is a truly most common value
-                pair_mode = most_common[0][0]
-            else:
-                # All values are unique, find the one closest to the mean
-                pair_mean = statistics.mean(pair_averages)
-                pair_mode = min(pair_averages_rounded, key=lambda x: abs(x - pair_mean))
-        else:
-            pair_mode = 0
+        for match in matches:
             pair_idx = match.get('pair_index', 0)
             speed = match.get('speed', 0)
             if pair_idx not in pair_speeds:
@@ -3860,18 +3801,8 @@ class TestCleanVersion(unittest.TestCase):
         # Calculate average speed for each pair
         pair_averages = [statistics.mean(pair_speeds[pair_idx]) for pair_idx in pair_speeds]
         pair_averages_rounded = [round(avg, 1) for avg in pair_averages]
-        # Calculate pair_mode with improved logic
-        if pair_averages_rounded:
-            most_common = Counter(pair_averages_rounded).most_common(1)
-            if most_common and most_common[0][1] > 1:
-                # There is a truly most common value
-                pair_mode = most_common[0][0]
-            else:
-                # All values are unique, find the one closest to the mean
-                pair_mean = statistics.mean(pair_averages)
-                pair_mode = min(pair_averages_rounded, key=lambda x: abs(x - pair_mean))
-        else:
-            pair_mode = 0        
+        pair_mode = Counter(pair_averages_rounded).most_common(1)[0][0]
+        
         return {
             'mean': mean,
             'median': median,
@@ -3882,43 +3813,6 @@ class TestCleanVersion(unittest.TestCase):
             'pair_mode': pair_mode
         }
     
-    def test_issue_investigation_protocol_compliance(self):
-        """Test that the Issue Investigation Protocol rule is properly documented and followed"""
-        # This test validates that Rule 5 (Issue Investigation Protocol) is properly documented
-        # and that the logging system is in place to support it
-        
-        # Check that log files exist and are accessible
-        log_files = ['dashboard_application.log', 'app_output.log']
-        for log_file in log_files:
-            if os.path.exists(log_file):
-                # Verify log file is readable
-                try:
-                    with open(log_file, 'r') as f:
-                        content = f.read()
-                    self.assertTrue(True, f"Log file {log_file} is accessible and readable")
-                except Exception as e:
-                    self.fail(f"Log file {log_file} exists but is not readable: {e}")
-            else:
-                # Log file doesn't exist yet, which is okay for a fresh start
-                self.assertTrue(True, f"Log file {log_file} will be created when application starts")
-        
-        # Verify that the rules file exists and contains the required content
-        rules_file = 'DEVELOPMENT_RULES.md'
-        self.assertTrue(os.path.exists(rules_file), 
-                       f"Rules file {rules_file} must exist")
-        
-        with open(rules_file, 'r') as f:
-            rules_content = f.read()
-        
-        self.assertIn('Issue Investigation Protocol', rules_content, 
-                     "Rule 5 (Issue Investigation Protocol) must be documented in the rules file")
-        self.assertIn('dashboard_application.log', rules_content,
-                     "Rule must specify dashboard_application.log as a log file to check")
-        self.assertIn('app_output.log', rules_content,
-                     "Rule must specify app_output.log as a log file to check")
-        
-        print("✅ Issue Investigation Protocol rule is properly documented and log files are accessible")
-
     def test_statistics_consistency_before_and_after_filters(self):
         """Test that statistics remain consistent and valid before and after applying filters"""
         import iss_speed_html_dashboard_v2_clean as clean

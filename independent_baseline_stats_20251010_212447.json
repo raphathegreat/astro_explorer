@@ -1,0 +1,112 @@
+{
+  "ORB_FLANNFalse_RANSACFalse_none_FEAT1000": {
+    "algorithm": "ORB",
+    "use_flann": false,
+    "use_ransac": false,
+    "contrast_enhancement": "none",
+    "max_features": 1000,
+    "total_matches": 892,
+    "valid_speeds": 892,
+    "processing_time": 1.040297031402588,
+    "statistics": {
+      "mean": 7.504134715824228,
+      "median": 6.623895167033912,
+      "std_dev": 3.2310036521501595,
+      "total_matches": 892,
+      "total_pairs": 2,
+      "match_mode": 6.6,
+      "pair_mode": 7.5
+    },
+    "success": true,
+    "timestamp": "2025-10-10T21:24:13.444697",
+    "implementation": "INDEPENDENT"
+  },
+  "ORB_FLANNFalse_RANSACFalse_clahe_FEAT1000": {
+    "algorithm": "ORB",
+    "use_flann": false,
+    "use_ransac": false,
+    "contrast_enhancement": "clahe",
+    "max_features": 1000,
+    "total_matches": 913,
+    "valid_speeds": 913,
+    "processing_time": 1.0159847736358643,
+    "statistics": {
+      "mean": 6.9375090016081,
+      "median": 6.389686368995783,
+      "std_dev": 2.60156883120657,
+      "total_matches": 913,
+      "total_pairs": 2,
+      "match_mode": 6.4,
+      "pair_mode": 6.7
+    },
+    "success": true,
+    "timestamp": "2025-10-10T21:24:14.469324",
+    "implementation": "INDEPENDENT"
+  },
+  "ORB_FLANNTrue_RANSACTrue_clahe_FEAT1000": {
+    "algorithm": "ORB",
+    "use_flann": true,
+    "use_ransac": true,
+    "contrast_enhancement": "clahe",
+    "max_features": 1000,
+    "total_matches": 555,
+    "valid_speeds": 555,
+    "processing_time": 1.0305888652801514,
+    "statistics": {
+      "mean": 6.371600215871231,
+      "median": 6.3748595481662695,
+      "std_dev": 0.4263027903133722,
+      "total_matches": 555,
+      "total_pairs": 2,
+      "match_mode": 6.8,
+      "pair_mode": 6.0
+    },
+    "success": true,
+    "timestamp": "2025-10-10T21:24:15.505062",
+    "implementation": "INDEPENDENT"
+  },
+  "SIFT_FLANNFalse_RANSACFalse_none_FEAT1000": {
+    "algorithm": "SIFT",
+    "use_flann": false,
+    "use_ransac": false,
+    "contrast_enhancement": "none",
+    "max_features": 1000,
+    "total_matches": 1186,
+    "valid_speeds": 1186,
+    "processing_time": 15.384558916091919,
+    "statistics": {
+      "mean": 7.236746172872632,
+      "median": 6.5513683187664356,
+      "std_dev": 3.336317211866256,
+      "total_matches": 1186,
+      "total_pairs": 2,
+      "match_mode": 6.6,
+      "pair_mode": 6.8
+    },
+    "success": true,
+    "timestamp": "2025-10-10T21:24:30.902322",
+    "implementation": "INDEPENDENT"
+  },
+  "SIFT_FLANNTrue_RANSACTrue_clahe_FEAT1000": {
+    "algorithm": "SIFT",
+    "use_flann": true,
+    "use_ransac": true,
+    "contrast_enhancement": "clahe",
+    "max_features": 1000,
+    "total_matches": 1006,
+    "valid_speeds": 1006,
+    "processing_time": 16.120787143707275,
+    "statistics": {
+      "mean": 6.443784650972378,
+      "median": 6.420333475506902,
+      "std_dev": 0.4732563153354368,
+      "total_matches": 1006,
+      "total_pairs": 2,
+      "match_mode": 6.4,
+      "pair_mode": 6.1
+    },
+    "success": true,
+    "timestamp": "2025-10-10T21:24:47.031861",
+    "implementation": "INDEPENDENT"
+  }
+}
