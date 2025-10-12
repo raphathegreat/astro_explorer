@@ -1576,7 +1576,11 @@
                                     <span class="checkmark"></span>
                                     Standard Deviation Filter
                                 </label>
-                                <p class="filter-description">Removes matches with speeds that are too far from the mean (extreme outliers). 2.0σ = removes matches >2 standard deviations from mean. Higher values = less aggressive filtering.</p>
+                                <p class="filter-description"><strong>What it does:</strong> Filters based on statistical outliers using standard deviation<br>
+                                    <strong>Method:</strong> Uses np.std() to calculate standard deviation and removes matches beyond Xσ from mean<br>
+                                    <strong>Logic:</strong> Removes matches with speeds more than X standard deviations away from the mean speed<br>
+                                    <strong>Example:</strong> 2.0σ means it removes matches with speeds >2 standard deviations from the mean<br>
+                                    <strong>Purpose:</strong> Removes extreme statistical outliers (very unusual speeds that might be errors)</p>
                             </div>
                             <div class="filter-params" id="stdDevParam" style="display: none;">
                                 <label>Std Dev Multiplier:</label>
@@ -1600,7 +1604,11 @@
                                     <span class="checkmark"></span>
                                     Cloudiness Filter
                                 </label>
-                                <p class="filter-description">Filters based on image brightness and contrast to remove cloudy images. Clear: high brightness (≥120) and contrast (≥55). Cloudy: low brightness (≤60) or contrast (≤40).</p>
+                                <p class="filter-description"><strong>What it does:</strong> Filters based on image brightness and contrast to categorize cloudiness<br>
+                                    <strong>Method:</strong> Analyzes image properties (brightness, contrast) to classify image quality<br>
+                                    <strong>Logic:</strong> Clear images have high brightness/contrast, cloudy images have low brightness/contrast<br>
+                                    <strong>Example:</strong> Clear: brightness ≥120 Filters based on image brightness and contrast to remove cloudy images. Clear: high brightness (≥120) and contrast (≥55). Cloudy: low brightness (≤60) or contrast (≤40). contrast ≥55, Cloudy: brightness ≤60 or contrast ≤40<br>
+                                    <strong>Purpose:</strong> Removes poor quality images (cloudy/overcast conditions that affect ISS visibility)</p>
                             </div>
                             <div class="filter-params" id="cloudinessParams" style="display: none;">
                                 <div class="settings-grid">
@@ -1658,7 +1666,11 @@
                                     <span class="checkmark"></span>
                                     ML Classification Filter
                                 </label>
-                                <p class="filter-description">Uses machine learning to classify images as Good or Not_Good based on quality. Good: High quality images. Not_Good: Low quality images with poor ISS visibility.</p>
+                                <p class="filter-description"><strong>What it does:</strong> Uses machine learning to classify images based on quality<br>
+                                    <strong>Method:</strong> Applies trained ML model to analyze image features and predict quality<br>
+                                    <strong>Logic:</strong> Classifies images as "Good" (high quality) or "Not_Good" (low quality)<br>
+                                    <strong>Example:</strong> Good: clear ISS visibility, Not_Good: poor visibility due to clouds/lighting<br>
+                                    <strong>Purpose:</strong> Removes low quality images using automated ML classification</p>
                             </div>
                             <div class="filter-params" id="mlClassificationParams" style="display: none;">
                                 <div class="checkbox-group">
@@ -1692,7 +1704,11 @@
                                 <span class="checkmark"></span>
                                 Custom GSD Value
                             </label>
-                            <p class="filter-description">Override the default GSD value (12648 cm/pixel) with a custom value for your specific camera setup or altitude.</p>
+                            <p class="filter-description"><strong>What it does:</strong> Override the default Ground Sample Distance (GSD) value<br>
+                            <strong>Method:</strong> Allows manual input of custom GSD value in cm/pixel<br>
+                            <strong>Logic:</strong> Replaces default GSD (12648 cm/pixel) with user-specified value for speed calculations<br>
+                            <strong>Example:</strong> 10000 cm/pixel = 100m per pixel (higher altitude), 15000 cm/pixel = 150m per pixel (lower altitude)<br>
+                            <strong>Purpose:</strong> Adjust speed calculations for different camera setups, altitudes, or ISS positions</p>
                         </div>
                         <div class="filter-params" id="customGSDParam" style="display: none;">
                             <label>GSD Value (cm/pixel):</label>
