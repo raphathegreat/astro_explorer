@@ -2753,7 +2753,11 @@
                     <div class="stat-card">
                         <div class="stat-value">${stats.match_mode.toFixed(1)}</div>
                         <div class="stat-label">Match Mode Speed (km/s)</div>
-                        <div class="stat-description">Most common individual match speed (one per keypoint match)</div>
+                        <div class="stat-description"><strong>What it shows:</strong> The most frequently occurring speed value from all individual keypoint matches<br>
+                            <strong>Method:</strong> Uses Counter to find the most common speed value (rounded to 1 decimal place)<br>
+                            <strong>Logic:</strong> Counts all individual match speeds and identifies the value that appears most often<br>
+                            <strong>Example:</strong> If speeds are [6.1, 6.1, 6.2, 6.1, 6.3], the mode is 6.1 km/s<br>
+                            <strong>Purpose:</strong> Shows the typical speed of individual keypoint matches (not pairs)</div>
                     </div>
                 `;
             }
@@ -2771,33 +2775,57 @@
                     <div class="stat-card">
                         <div class="stat-value">${safeFormat(stats.mean, 2)}</div>
                         <div class="stat-label">Mean Speed (km/s)</div>
-                        <div class="stat-description">Average speed across all individual matches</div>
+                        <div class="stat-description"><strong>What it shows:</strong> The arithmetic average of all individual keypoint match speeds<br>
+                            <strong>Method:</strong> Uses sum of all speeds divided by total number of matches<br>
+                            <strong>Logic:</strong> Calculates the central tendency of all individual match speeds<br>
+                            <strong>Example:</strong> If speeds are [6.0, 6.5, 7.0], the mean is 6.5 km/s<br>
+                            <strong>Purpose:</strong> Provides the overall average speed across all keypoint matches</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value">${safeFormat(stats.median, 2)}</div>
                         <div class="stat-label">Median Speed (km/s)</div>
-                        <div class="stat-description">Middle value of all individual match speeds</div>
+                        <div class="stat-description"><strong>What it shows:</strong> The middle value when all individual match speeds are sorted<br>
+                            <strong>Method:</strong> Sorts all speeds and selects the middle value (or average of two middle values)<br>
+                            <strong>Logic:</strong> Divides the sorted speed list in half to find the central value<br>
+                            <strong>Example:</strong> If speeds are [6.0, 6.5, 7.0, 7.5, 8.0], the median is 7.0 km/s<br>
+                            <strong>Purpose:</strong> Shows the typical speed value, less affected by extreme outliers than the mean</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value">${safeFormat(stats.pair_mode, 1)}</div>
                         <div class="stat-label">Mode Speed (km/s)</div>
-                        <div class="stat-description">Most common pair speed (one per image pair)</div>
+                        <div class="stat-description"><strong>What it shows:</strong> The most frequently occurring average speed from all image pairs<br>
+                            <strong>Method:</strong> Calculates average speed per pair, then finds most common pair average<br>
+                            <strong>Logic:</strong> Groups matches by pair, averages each pair's speeds, then finds most common average<br>
+                            <strong>Example:</strong> If pair averages are [6.1, 6.1, 6.2, 6.1], the pair mode is 6.1 km/s<br>
+                            <strong>Purpose:</strong> Shows the typical speed of image pairs (one value per pair, not per match)</div>
                     </div>
                     ${matchModeHtml}
                     <div class="stat-card">
                         <div class="stat-value">${stats.match_count || 'N/A'}</div>
                         <div class="stat-label">Total Matches</div>
-                        <div class="stat-description">Number of individual keypoint matches (Updated: 2025-01-07)</div>
+                        <div class="stat-description"><strong>What it shows:</strong> Total count of individual keypoint matches across all image pairs<br>
+                            <strong>Method:</strong> Counts all successful feature matches between consecutive images<br>
+                            <strong>Logic:</strong> Sums up all keypoint correspondences found by the feature detection algorithm<br>
+                            <strong>Example:</strong> If 3 image pairs have 100, 150, 200 matches respectively, total is 450 matches<br>
+                            <strong>Purpose:</strong> Indicates the quality and quantity of feature detection results</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value">${stats.count || 'N/A'}</div>
                         <div class="stat-label">Total Pairs</div>
-                        <div class="stat-description">Number of image pairs processed</div>
+                        <div class="stat-description"><strong>What it shows:</strong> Total count of consecutive image pairs used for speed calculation<br>
+                            <strong>Method:</strong> Counts the number of sequential image pairs (N images = N-1 pairs)<br>
+                            <strong>Logic:</strong> Each pair represents one speed measurement between two consecutive images<br>
+                            <strong>Example:</strong> If 4 images are loaded, there are 3 pairs: (1→2), (2→3), (3→4)<br>
+                            <strong>Purpose:</strong> Shows how many speed measurements were calculated from the image sequence</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value">${safeFormat(stats.std_dev, 2)}</div>
                         <div class="stat-label">Standard Deviation</div>
-                        <div class="stat-description">Measure of speed variation</div>
+                        <div class="stat-description"><strong>What it shows:</strong> Statistical measure of how spread out the individual match speeds are<br>
+                            <strong>Method:</strong> Uses standard deviation formula: √(Σ(x-μ)²/n) where μ is the mean<br>
+                            <strong>Logic:</strong> Calculates the average distance of each speed from the mean speed<br>
+                            <strong>Example:</strong> If speeds are [6.0, 6.5, 7.0] with mean 6.5, std dev shows how much they vary<br>
+                            <strong>Purpose:</strong> Indicates the consistency of speed measurements (lower = more consistent)</div>
                     </div>
                 </div>
             `;

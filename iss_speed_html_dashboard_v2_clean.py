@@ -5825,4 +5825,4 @@ if __name__ == '__main__':
     print("🔄 The dashboard will automatically detect photos-* folders in the project directory")
     
     # Use port 5002 instead of 5000/5001 to avoid conflicts
-    app.run(debug=True, host='0.0.0.0', port=5003) test change
+    app.run(debug=True, host='0.0.0.0', port=5003)
