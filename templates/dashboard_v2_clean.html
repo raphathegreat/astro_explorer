@@ -1374,7 +1374,11 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="config-description">Enables faster feature matching for large datasets</div>
+                            <div class="config-description"><strong>What it does:</strong> Enables Fast Library for Approximate Nearest Neighbors (FLANN) matching<br>
+                                <strong>Method:</strong> Uses optimized algorithms for faster feature matching between images<br>
+                                <strong>Logic:</strong> Approximates nearest neighbor search instead of exact matching for speed<br>
+                                <strong>Example:</strong> Reduces matching time from 10s to 2s for large feature sets (1000+ features)<br>
+                                <strong>Purpose:</strong> Significantly improves processing speed for datasets with many keypoints</div>
                         </div>
                         
                         <div class="config-item">
@@ -1393,7 +1397,11 @@
                                 <input type="range" id="maxFeatures" min="100" max="5000" value="1000" step="100">
                                 <span id="maxFeaturesValue">1000</span>
                             </div>
-                            <div class="config-description">Controls feature detection density and processing speed</div>
+                            <div class="config-description"><strong>What it does:</strong> Sets the maximum number of keypoints to detect in each image<br>
+                                <strong>Method:</strong> Limits the feature detector to find only the strongest N keypoints<br>
+                                <strong>Logic:</strong> Higher values = more features but slower processing, lower values = faster but fewer features<br>
+                                <strong>Example:</strong> 1000 features = good balance, 500 = faster processing, 2000 = more detail but slower<br>
+                                <strong>Purpose:</strong> Balances feature detection quality with processing speed and memory usage</div>
                         </div>
                     </div>
                 </div>
@@ -1423,7 +1431,11 @@
                                 <option value="unsharp">Unsharp Masking</option>
                                 <option value="none">None (Original Image)</option>
                             </select>
-                            <div class="config-description">Improves feature detection in low-contrast images</div>
+                            <div class="config-description"><strong>What it does:</strong> Applies image enhancement techniques to improve feature detection quality<br>
+                                <strong>Method:</strong> Uses various algorithms (CLAHE, histogram equalization, gamma correction, unsharp masking)<br>
+                                <strong>Logic:</strong> Enhances image contrast and sharpness to make keypoints more detectable<br>
+                                <strong>Example:</strong> CLAHE improves cloudy images, gamma correction helps with lighting variations<br>
+                                <strong>Purpose:</strong> Increases the number and quality of detected keypoints in challenging lighting conditions</div>
                         </div>
                     </div>
                 </div>
@@ -1450,7 +1462,11 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="config-description">Removes false matches caused by clouds and noise</div>
+                            <div class="config-description"><strong>What it does:</strong> Applies RANSAC (Random Sample Consensus) algorithm to filter out false matches<br>
+                                <strong>Method:</strong> Uses homography estimation to identify geometrically consistent matches<br>
+                                <strong>Logic:</strong> Removes matches that don't fit the expected geometric transformation between images<br>
+                                <strong>Example:</strong> Filters out matches from clouds, shadows, or other non-ISS features<br>
+                                <strong>Purpose:</strong> Improves accuracy by removing false positive matches that would skew speed calculations</div>
                             
                             <div id="ransacHomographyParams" class="config-params" style="display: none;">
                                 <div class="param-grid">
