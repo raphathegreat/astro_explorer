@@ -2303,6 +2303,7 @@ def get_statistics():
     logger.info(f"📊 Raw statistics: {stats}")
     
     # Calculate pair_mode (most common pair speed at one decimal place)
+    # If all values are unique, use the one closest to the mean
     print(f"🔍 Pair mode calculation debug:")
     print(f"🔍   pair_speeds count: {len(pair_speeds)}")
     print(f"🔍   pair_speeds values: {pair_speeds[:5] if pair_speeds else 'None'}")
@@ -2312,7 +2313,19 @@ def get_statistics():
         pair_speeds_rounded = [round(speed, 1) for speed in pair_speeds]
         pair_counter = Counter(pair_speeds_rounded)
         most_common = pair_counter.most_common(1)
-        stats['pair_mode'] = most_common[0][0] if most_common else None
+        
+        # Check if the most common value appears more than once
+        if most_common and most_common[0][1] > 1:
+            # There is a truly most common value
+            stats['pair_mode'] = most_common[0][0]
+            print(f"🔍   Found most common value: {stats['pair_mode']} (appears {most_common[0][1]} times)")
+        else:
+            # All values are unique, find the one closest to the mean
+            pair_mean = sum(pair_speeds) / len(pair_speeds)
+            closest_to_mean = min(pair_speeds_rounded, key=lambda x: abs(x - pair_mean))
+            stats['pair_mode'] = closest_to_mean
+            print(f"🔍   All values unique, using closest to mean: {stats['pair_mode']} (mean: {pair_mean:.2f})")
+        
         print(f"🔍   pair_speeds_rounded: {pair_speeds_rounded}")
         print(f"🔍   pair_counter: {dict(pair_counter)}")
         print(f"🔍   most_common: {most_common}")
@@ -2522,12 +2535,22 @@ def apply_filters():
         stats['match_count'] = len(all_match_speeds)  # Number of individual matches
         
         # Calculate pair_mode (most common pair speed at one decimal place)
+        # If all values are unique, use the one closest to the mean
         if pair_speeds:
             from collections import Counter
             pair_speeds_rounded = [round(speed, 1) for speed in pair_speeds]
             pair_counter = Counter(pair_speeds_rounded)
             most_common = pair_counter.most_common(1)
-            stats['pair_mode'] = most_common[0][0] if most_common else None
+            
+            # Check if the most common value appears more than once
+            if most_common and most_common[0][1] > 1:
+                # There is a truly most common value
+                stats['pair_mode'] = most_common[0][0]
+            else:
+                # All values are unique, find the one closest to the mean
+                pair_mean = sum(pair_speeds) / len(pair_speeds)
+                closest_to_mean = min(pair_speeds_rounded, key=lambda x: abs(x - pair_mean))
+                stats['pair_mode'] = closest_to_mean
         else:
             stats['pair_mode'] = None
         
