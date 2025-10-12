@@ -1549,16 +1549,25 @@
                                     Keypoint Percentile Filter
                                 </label>
                                 <p class="filter-description">
-                                    <strong>What it does:</strong> Filters based on speed percentiles of individual matches<br>
-                                    <strong>Method:</strong> Uses np.percentile() to calculate speed thresholds<br>
-                                    <strong>Logic:</strong> Removes matches with speeds in the bottom X% and top X% of all speeds<br>
-                                    <strong>Example:</strong> 5% means it removes the slowest 5% and fastest 5% of all match speeds<br>
-                                    <strong>Purpose:</strong> Removes outlier speeds (very slow or very fast matches that might be errors)
+                                    <strong>What it does:</strong> Filters based on speed percentiles of individual matches with separate top and bottom thresholds<br>
+                                    <strong>Method:</strong> Uses np.percentile() to calculate separate speed thresholds for bottom and top percentiles<br>
+                                    <strong>Logic:</strong> Removes matches with speeds in the bottom X% and/or top Y% of all speeds (configurable separately)<br>
+                                    <strong>Example:</strong> Bottom 5% + Top 10% means it removes the slowest 5% and fastest 10% of all match speeds<br>
+                                    <strong>Purpose:</strong> Removes outlier speeds with flexible control over slow vs fast outlier removal
                                 </p>
                             </div>
                             <div class="filter-params" id="keypointPercentileParam" style="display: none;">
                                 <label>Percentile:</label>
-                                <input type="number" id="keypointPercentile" value="5" min="0" max="50" step="1">
+                                <div class="param-group">
+                                    <label>Bottom Percentile:</label>
+                                    <input type="number" id="keypointPercentileBottom" value="5" min="0" max="50" step="1">
+                                    <span class="value-display" id="keypointPercentileBottomValue">5%</span>
+                                </div>
+                                <div class="param-group">
+                                    <label>Top Percentile:</label>
+                                    <input type="number" id="keypointPercentileTop" value="5" min="0" max="50" step="1">
+                                    <span class="value-display" id="keypointPercentileTopValue">5%</span>
+                                </div>
                                 <span class="value-display" id="keypointPercentileValue">5%</span>
                             </div>
                         </div>
@@ -2145,7 +2154,21 @@
             }
 
             // Update value displays
-            const keypointPercentile = document.getElementById('keypointPercentile');
+            const keypointPercentileBottom = document.getElementById('keypointPercentileBottom');
+            if (keypointPercentileBottom) {
+                keypointPercentileBottom.addEventListener('input', function() {
+                    const valueDisplay = document.getElementById('keypointPercentileBottomValue');
+                    if (valueDisplay) valueDisplay.textContent = this.value + '%';
+                });
+            }
+
+            const keypointPercentileTop = document.getElementById('keypointPercentileTop');
+            if (keypointPercentileTop) {
+                keypointPercentileTop.addEventListener('input', function() {
+                    const valueDisplay = document.getElementById('keypointPercentileTopValue');
+                    if (valueDisplay) valueDisplay.textContent = this.value + '%';
+                });
+            }
             if (keypointPercentile) {
                 keypointPercentile.addEventListener('input', function() {
                     const valueDisplay = document.getElementById('keypointPercentileValue');
@@ -2923,7 +2946,8 @@
                 cloudyBrightnessMax: document.getElementById('cloudyBrightnessMax')?.value || '60',
                 cloudyContrastMax: document.getElementById('cloudyContrastMax')?.value || '40',
                 enableKeypointPercentile: document.getElementById('enableKeypointPercentile')?.checked || false,
-                keypointPercentile: document.getElementById('keypointPercentile')?.value || '5',
+                keypointPercentileBottom: document.getElementById('keypointPercentileBottom')?.value || '5',
+                keypointPercentileTop: document.getElementById('keypointPercentileTop')?.value || '5',
                 enablePercentile: document.getElementById('enablePercentile')?.checked || false,
                 pairPercentile: document.getElementById('pairPercentile')?.value || '10',
                 enableStdDev: document.getElementById('enableStdDev')?.checked || false,
@@ -2950,7 +2974,8 @@
             
             // Remaining filters
             const enableKeypointPercentile = document.getElementById('enableKeypointPercentile').checked;
-            const keypointPercentile = parseFloat(document.getElementById('keypointPercentile').value);
+            const keypointPercentileBottom = parseFloat(document.getElementById('keypointPercentileBottom').value);
+            const keypointPercentileTop = parseFloat(document.getElementById('keypointPercentileTop').value);
             
             const enablePercentile = document.getElementById('enablePercentile').checked;
             const pairPercentile = parseFloat(document.getElementById('pairPercentile').value);
@@ -2981,7 +3006,8 @@
             // Advanced filters - only include if enabled
             if (enableKeypointPercentile) {
                 filters.enable_keypoint_percentile = true;
-                filters.keypoint_percentile = keypointPercentile;
+                filters.keypoint_percentile_bottom = keypointPercentileBottom;
+                filters.keypoint_percentile_top = keypointPercentileTop;
             }
             
             if (enablePercentile) {
@@ -3153,7 +3179,21 @@
 
         function resetFilters() {
             // Reset filter values to defaults (checkboxes are reset in resetAllStates)
-            const keypointPercentile = document.getElementById('keypointPercentile');
+            const keypointPercentileBottom = document.getElementById('keypointPercentileBottom');
+            if (keypointPercentileBottom) {
+                keypointPercentileBottom.addEventListener('input', function() {
+                    const valueDisplay = document.getElementById('keypointPercentileBottomValue');
+                    if (valueDisplay) valueDisplay.textContent = this.value + '%';
+                });
+            }
+
+            const keypointPercentileTop = document.getElementById('keypointPercentileTop');
+            if (keypointPercentileTop) {
+                keypointPercentileTop.addEventListener('input', function() {
+                    const valueDisplay = document.getElementById('keypointPercentileTopValue');
+                    if (valueDisplay) valueDisplay.textContent = this.value + '%';
+                });
+            }
             if (keypointPercentile) keypointPercentile.value = 5;
             
             const pairPercentile = document.getElementById('pairPercentile');
@@ -3184,7 +3224,11 @@
             // Note: Parameter sections are hidden in resetAllStates()
 
             // Update value displays (with null checks)
-            const keypointPercentileValue = document.getElementById('keypointPercentileValue');
+            const keypointPercentileBottomValue = document.getElementById('keypointPercentileBottomValue');
+            if (keypointPercentileBottomValue) keypointPercentileBottomValue.textContent = '5%';
+            
+            const keypointPercentileTopValue = document.getElementById('keypointPercentileTopValue');
+            if (keypointPercentileTopValue) keypointPercentileTopValue.textContent = '5%';
             if (keypointPercentileValue) keypointPercentileValue.textContent = '5%';
             
             const pairPercentileValue = document.getElementById('pairPercentileValue');
