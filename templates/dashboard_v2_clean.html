@@ -1290,16 +1290,16 @@
                             <div class="range-separator">to</div>
                             <div class="range-value end-value">
                                 <span class="value-label">End</span>
-                                <span id="endLabel" class="value-number">10</span>
+                                <span id="endLabel" class="value-number">9</span>
                             </div>
                         </div>
                         <div class="dual-range-container">
                             <div class="range-track"></div>
                             <input type="range" id="startIdx" min="0" max="100" value="0" class="range-input start-range">
-                            <input type="range" id="endIdx" min="0" max="100" value="10" class="range-input end-range">
+                            <input type="range" id="endIdx" min="0" max="100" value="9" class="range-input end-range">
                         </div>
                         <div class="range-info">
-                            <span id="rangeInfo">Processing 11 images (0-10)</span>
+                            <span id="rangeInfo">Processing 10 images (0-9)</span>
                         </div>
                     </div>
                 </div>
@@ -2032,7 +2032,7 @@
                     startSlider.value = 0;
                     endSlider.value = Math.min(9, maxValue); // Default to first 10 images or max available
                     
-                    updateLabels();
+                    window.updateLabels();
                 } else {
                     // Disable sliders if no folder selected
                     startSlider.disabled = true;
@@ -2041,7 +2041,7 @@
                     endSlider.max = 0;
                     startSlider.value = 0;
                     endSlider.value = 0;
-                    updateLabels();
+                    window.updateLabels();
                 }
             }
             
@@ -2166,12 +2166,6 @@
             if (keypointPercentileTop) {
                 keypointPercentileTop.addEventListener('input', function() {
                     const valueDisplay = document.getElementById('keypointPercentileTopValue');
-                    if (valueDisplay) valueDisplay.textContent = this.value + '%';
-                });
-            }
-            if (keypointPercentile) {
-                keypointPercentile.addEventListener('input', function() {
-                    const valueDisplay = document.getElementById('keypointPercentileValue');
                     if (valueDisplay) valueDisplay.textContent = this.value + '%';
                 });
             }
@@ -2364,23 +2358,23 @@
                         const totalImagesElement = document.getElementById('totalImages');
                         if (totalImagesElement) totalImagesElement.textContent = totalImages;
                         
-                        const endIdxElement = document.getElementById('endIdx');
-                        if (endIdxElement) {
-                            endIdxElement.max = totalImages - 1;
-                            endIdxElement.value = Math.min(10, totalImages - 1);
+                        // Ensure sliders are updated
+                        if (typeof updateSliderMax === 'function') {
+                            updateSliderMax();
                         }
+                        
                     }
                 } else {
                     const totalImagesElement = document.getElementById('totalImages');
                     if (totalImagesElement) totalImagesElement.textContent = '-';
+                        
+                        // Ensure sliders are updated
+                        if (typeof updateSliderMax === 'function') {
+                            updateSliderMax();
+                        }
                     
-                    const endIdxElement = document.getElementById('endIdx');
-                    if (endIdxElement) {
-                        endIdxElement.max = 0;
-                        endIdxElement.value = 0;
-                    }
                 }
-                updateLabels();
+                window.updateLabels();
             });
         }
 
@@ -3194,7 +3188,6 @@
                     if (valueDisplay) valueDisplay.textContent = this.value + '%';
                 });
             }
-            if (keypointPercentile) keypointPercentile.value = 5;
             
             const pairPercentile = document.getElementById('pairPercentile');
             if (pairPercentile) pairPercentile.value = 30;
