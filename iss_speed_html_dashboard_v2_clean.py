@@ -674,6 +674,16 @@ def load_v2_cache(cache_key):
         print(f"❌ Error loading cache: {e}")
         return None
 
+
+# Alias functions for test compatibility
+def save_cache(cache_key, data):
+    """Alias for save_v2_cache for test compatibility"""
+    return save_v2_cache(cache_key, data)
+
+def load_cache(cache_key):
+    """Alias for load_v2_cache for test compatibility"""
+    return load_v2_cache(cache_key)
+
 def get_time(image):
     with open(image, 'rb') as image_file:
         img = Image(image_file)
@@ -2243,7 +2253,8 @@ def get_statistics():
             'count': 0,
             'std_dev': 0,
             'match_mode': 0,
-            'match_count': 0
+            'match_count': 0,
+            'pair_mode': 0
         }
         logger.info(f"📊 Returning default statistics: {default_stats}")
         return jsonify(default_stats)
