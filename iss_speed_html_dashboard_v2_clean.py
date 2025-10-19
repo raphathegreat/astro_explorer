@@ -37,6 +37,11 @@ import json
 
 app = Flask(__name__)
 
+# Detect environment (local vs Railway)
+def is_railway_deployment():
+    """Detect if running on Railway or locally"""
+    return os.environ.get('RAILWAY_ENVIRONMENT') is not None or os.environ.get('PORT') is not None
+
 # Configure comprehensive logging system
 import logging
 import sys
@@ -3315,7 +3320,7 @@ def apply_match_filters(matches, filters):
 
 @app.route('/api/folders')
 def get_folders():
-    """Get list of available photos folders (project folder only)"""
+    """Get list of available photos folders (project folder and uploaded folders)"""
     photos_folders = []
     
     # Get the project directory (where the script is located)
@@ -3338,17 +3343,94 @@ def get_folders():
         # If we can't read the directory, just return what we have
         pass
     
+    # Check for uploaded photo folders
+    try:
+        upload_folder = 'uploaded_photos'
+        if os.path.exists(upload_folder):
+            for item in os.listdir(upload_folder):
+                item_path = os.path.join(upload_folder, item)
+                if os.path.isdir(item_path):
+                    rel_path = os.path.relpath(item_path, os.getcwd())
+                    if rel_path not in photos_folders:
+                        photos_folders.append(rel_path)
+    except OSError:
+        pass
+    
     # Sort and add image counts
     photos_folders = sorted(photos_folders)
     folder_data = []
     for folder in photos_folders:
         try:
-            image_count = len([f for f in os.listdir(folder) if f.endswith('.jpg')])
+            # Count various image formats
+            image_extensions = ['.jpg', '.jpeg', '.png', '.tiff', '.tif']
+            image_count = 0
+            for ext in image_extensions:
+                image_count += len([f for f in os.listdir(folder) if f.lower().endswith(ext)])
             folder_data.append({'name': folder, 'count': image_count})
         except:
             folder_data.append({'name': folder, 'count': 0})
     
     return jsonify(folder_data)
+
+@app.route('/api/environment')
+def get_environment():
+    """Get environment information for frontend"""
+    return jsonify({
+        'is_railway': is_railway_deployment(),
+        'environment': 'railway' if is_railway_deployment() else 'local',
+        'supports_folder_selection': not is_railway_deployment()
+    })
+
+@app.route('/api/upload-folder', methods=['POST'])
+def upload_folder():
+    """Handle folder uploads from File System Access API"""
+    try:
+        if 'files' not in request.files:
+            return jsonify({'error': 'No files provided'}), 400
+        
+        files = request.files.getlist('files')
+        folder_name = request.form.get('folder_name', 'selected_folder')
+        original_folder_name = request.form.get('original_folder_name', 'Unknown Folder')
+        
+        if not files or all(file.filename == '' for file in files):
+            return jsonify({'error': 'No files selected'}), 400
+        
+        # Create upload directory
+        upload_folder = 'uploaded_photos'
+        if not os.path.exists(upload_folder):
+            os.makedirs(upload_folder)
+        
+        # Create a unique folder path
+        folder_path = os.path.join(upload_folder, folder_name)
+        os.makedirs(folder_path, exist_ok=True)
+        
+        uploaded_files = []
+        allowed_extensions = {'.jpg', '.jpeg', '.png', '.tiff', '.tif'}
+        
+        for file in files:
+            if file and file.filename:
+                # Check file extension
+                filename = file.filename.lower()
+                if any(filename.endswith(ext) for ext in allowed_extensions):
+                    # Save file
+                    file_path = os.path.join(folder_path, file.filename)
+                    file.save(file_path)
+                    uploaded_files.append(file.filename)
+        
+        if not uploaded_files:
+            return jsonify({'error': 'No valid image files uploaded'}), 400
+        
+        # Return success response
+        return jsonify({
+            'success': True,
+            'message': f'Successfully uploaded {len(uploaded_files)} files',
+            'folder_path': folder_path,
+            'uploaded_files': uploaded_files,
+            'folder_name': folder_name
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Upload failed: {str(e)}'}), 500
 
 @app.route('/api/process', methods=['POST'])
 def process_folder():

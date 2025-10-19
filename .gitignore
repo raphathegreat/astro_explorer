@@ -49,6 +49,9 @@ photos-4/
 # *.jpeg
 # *.png
 
+# Uploaded photos (user uploads)
+uploaded_photos/
+
 # Version control backups (local only)
 versions/
 archive/

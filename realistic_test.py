@@ -2456,9 +2456,14 @@ class TestCleanVersion(unittest.TestCase):
             {'speed': 7.9, 'pair_index': 1}
         ]
         
-        # Mock the global processed_matches
+        # Mock the global processed_matches and clear filtered data
         original_matches = clean.processed_matches
+        original_filtered_matches = clean.current_filtered_matches
+        original_filters = clean.current_filters
+        
         clean.processed_matches = test_matches
+        clean.current_filtered_matches = None  # Clear filtered data
+        clean.current_filters = {}  # Clear filters
         
         try:
             with clean.app.test_client() as client:
@@ -2474,6 +2479,8 @@ class TestCleanVersion(unittest.TestCase):
                 self.assertEqual(data['match_count'], 5)  # Number of matches
         finally:
             clean.processed_matches = original_matches
+            clean.current_filtered_matches = original_filtered_matches
+            clean.current_filters = original_filters
     
     def test_statistics_edge_cases(self):
         """Test statistics with edge cases"""
@@ -2509,9 +2516,14 @@ class TestCleanVersion(unittest.TestCase):
             {'speed': 7.9, 'pair_index': 2, 'image1_properties': {'brightness': 150, 'contrast': 80}}
         ]
         
-        # Mock the global processed_matches
+        # Mock the global processed_matches and clear filtered data
         original_matches = clean.processed_matches
+        original_filtered_matches = clean.current_filtered_matches
+        original_filters = clean.current_filters
+        
         clean.processed_matches = test_matches
+        clean.current_filtered_matches = None  # Clear filtered data
+        clean.current_filters = {}  # Clear filters
         
         try:
             with clean.app.test_client() as client:
@@ -2526,6 +2538,8 @@ class TestCleanVersion(unittest.TestCase):
                 self.assertEqual(len(data['pairs']['colors']), 3)
         finally:
             clean.processed_matches = original_matches
+            clean.current_filtered_matches = original_filtered_matches
+            clean.current_filters = original_filters
     
     def test_statistics_consistency_across_endpoints(self):
         """Test that statistics are consistent between /api/statistics and /api/plot-data"""
@@ -2539,9 +2553,14 @@ class TestCleanVersion(unittest.TestCase):
             {'speed': 7.1, 'pair_index': 1}
         ]
         
-        # Mock the global processed_matches
+        # Mock the global processed_matches and clear filtered data
         original_matches = clean.processed_matches
+        original_filtered_matches = clean.current_filtered_matches
+        original_filters = clean.current_filters
+        
         clean.processed_matches = test_matches
+        clean.current_filtered_matches = None  # Clear filtered data
+        clean.current_filters = {}  # Clear filters
         
         try:
             with clean.app.test_client() as client:
@@ -2562,6 +2581,8 @@ class TestCleanVersion(unittest.TestCase):
                 self.assertEqual(len(plot_data['pairs']['pairs']), 2)
         finally:
             clean.processed_matches = original_matches
+            clean.current_filtered_matches = original_filtered_matches
+            clean.current_filters = original_filters
     
     def test_frontend_statistics_display_accuracy(self):
         """Test that frontend displays correct statistics values"""
@@ -2576,9 +2597,14 @@ class TestCleanVersion(unittest.TestCase):
             {'speed': 7.9, 'pair_index': 1}
         ]
         
-        # Mock the global processed_matches
+        # Mock the global processed_matches and clear filtered data
         original_matches = clean.processed_matches
+        original_filtered_matches = clean.current_filtered_matches
+        original_filters = clean.current_filters
+        
         clean.processed_matches = test_matches
+        clean.current_filtered_matches = None  # Clear filtered data
+        clean.current_filters = {}  # Clear filters
         
         try:
             with clean.app.test_client() as client:
@@ -2602,6 +2628,8 @@ class TestCleanVersion(unittest.TestCase):
                 self.assertGreater(data['pair_mode'], 0)
         finally:
             clean.processed_matches = original_matches
+            clean.current_filtered_matches = original_filtered_matches
+            clean.current_filters = original_filters
     
     def test_sections_3_5_6_data_consistency(self):
         """Test that Sections 3, 5, and 6 use the same underlying data"""
@@ -2618,9 +2646,14 @@ class TestCleanVersion(unittest.TestCase):
             {'speed': 7.6, 'pair_index': 2}
         ]
         
-        # Mock the global processed_matches
+        # Mock the global processed_matches and clear filtered data
         original_matches = clean.processed_matches
+        original_filtered_matches = clean.current_filtered_matches
+        original_filters = clean.current_filters
+        
         clean.processed_matches = test_matches
+        clean.current_filtered_matches = None  # Clear filtered data
+        clean.current_filters = {}  # Clear filters
         
         try:
             with clean.app.test_client() as client:
@@ -2645,6 +2678,8 @@ class TestCleanVersion(unittest.TestCase):
                 self.assertAlmostEqual(stats_data['median'], plot_data['histogram']['median'], places=2)
         finally:
             clean.processed_matches = original_matches
+            clean.current_filtered_matches = original_filtered_matches
+            clean.current_filters = original_filters
     
     def test_sections_data_consistency_with_filters(self):
         """Test that Sections 3, 5, and 6 remain consistent when filters are applied"""
@@ -2707,7 +2742,12 @@ class TestCleanVersion(unittest.TestCase):
         # Test with single match
         single_match = [{'speed': 7.5, 'pair_index': 0}]
         original_matches = clean.processed_matches
+        original_filtered_matches = clean.current_filtered_matches
+        original_filters = clean.current_filters
+        
         clean.processed_matches = single_match
+        clean.current_filtered_matches = None  # Clear filtered data
+        clean.current_filters = {}  # Clear filters
         
         try:
             with clean.app.test_client() as client:
@@ -2726,9 +2766,13 @@ class TestCleanVersion(unittest.TestCase):
                 self.assertEqual(len(plot_data['pairs']['pairs']), 1)
         finally:
             clean.processed_matches = original_matches
+            clean.current_filtered_matches = original_filtered_matches
+            clean.current_filters = original_filters
         
         # Test with no data
         clean.processed_matches = []
+        clean.current_filtered_matches = None  # Clear filtered data
+        clean.current_filters = {}  # Clear filters
         
         try:
             with clean.app.test_client() as client:
