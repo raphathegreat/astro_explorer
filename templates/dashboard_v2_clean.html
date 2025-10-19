@@ -1278,7 +1278,26 @@
                     <select id="folderSelect">
                         <option value="">Select a folder...</option>
                     </select>
+                    <div id="noFoldersMessage" style="display: none; margin-top: 8px; padding: 8px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; font-size: 14px; color: #6c757d;">
+                        ℹ️ No photo folders found. Please upload photos using the "Choose Files" button below.
+                    </div>
                 </div>
+                <!-- Railway environment: File upload -->
+                <div id="railwayFileUpload" class="control-group" style="display: none;">
+                    <label>Upload Photos:</label>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
+                        <input type="file" id="fileUpload" multiple accept=".jpg,.jpeg,.png,.tiff,.tif" style="display: none;">
+                        <button type="button" id="uploadButton" onclick="document.getElementById('fileUpload').click()" style="padding: 10px 20px; background: linear-gradient(135deg, #28a745, #20c997); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            📤 Choose Photos
+                        </button>
+                        <input type="text" id="folderNameInput" placeholder="Folder name (optional)" style="width: 180px; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 4px;">
+                    </div>
+                    <div style="margin-top: 8px; font-size: 13px; color: #6c757d;">
+                        💡 Select multiple image files (.jpg, .png, .tiff) to upload and analyze
+                    </div>
+                </div>
+            </div>
+            <div id="uploadStatus" style="margin-top: 10px; display: none;"></div>
                 <div class="control-group range-slider-group">
                     <label>Image Range:</label>
                     <div class="range-container">
@@ -1914,15 +1933,41 @@
     <script>
         let currentData = null;
         let filteredData = null;
+        let selectedFolderHandle = null; // Store the selected folder handle
 
         // Load folders on page load
         window.onload = function() {
+            detectEnvironment();
             loadFolders();
             setupFilterEventListeners();
             setupRangeSliders();
             setupTooltips();
             checkAndEnableRefreshButton();
         };
+
+        // Environment detection and UI setup
+        async function detectEnvironment() {
+            try {
+                const response = await fetch('/api/environment');
+                const env = await response.json();
+                
+                console.log('🌍 Environment detected:', env);
+                
+                if (env.supports_folder_selection) {
+                    // Local environment - folder selection is in dropdown
+                    document.getElementById('railwayFileUpload').style.display = 'none';
+                    console.log('🏠 Local environment: Folder selection enabled in dropdown');
+                } else {
+                    // Railway environment - show file upload
+                    document.getElementById('railwayFileUpload').style.display = 'flex';
+                    console.log('☁️ Railway environment: File upload enabled');
+                }
+            } catch (error) {
+                console.error('❌ Error detecting environment:', error);
+                // Default to file upload if detection fails
+                document.getElementById('railwayFileUpload').style.display = 'flex';
+            }
+        }
         
         async function checkAndEnableRefreshButton() {
             try {
@@ -2336,13 +2381,256 @@
                     console.log('📁 Processing folder:', folder.name, 'count:', folder.count);
                     const option = document.createElement('option');
                     option.value = folder.name;
-                    option.textContent = `${folder.name} (${folder.count || 0} images)`;
+                    // Use display_name if available (for uploaded folders), otherwise use folder name
+                    const displayText = folder.display_name || `${folder.name} (${folder.count || 0} images)`;
+                    option.textContent = displayText;
                     select.appendChild(option);
                 });
+                
+                // Show helpful message if no folders found
+                const noFoldersMessage = document.getElementById('noFoldersMessage');
+                if (folders.length === 0) {
+                    if (noFoldersMessage) {
+                        noFoldersMessage.style.display = 'block';
+                    }
+                } else {
+                    if (noFoldersMessage) {
+                        noFoldersMessage.style.display = 'none';
+                    }
+                }
+                
+                // Add the "Choose folder from device..." option at the end (only for local)
+                const railwayUpload = document.getElementById('railwayFileUpload');
+                if (railwayUpload && railwayUpload.style.display === 'none') {
+                    // Only add folder selection option if we're in local environment
+                    const selectFolderOption = document.createElement('option');
+                    selectFolderOption.value = 'select_folder';
+                    selectFolderOption.textContent = '📁 Choose folder from device...';
+                    select.appendChild(selectFolderOption);
+                }
                 
                 console.log('📁 Folder dropdown populated successfully');
             } catch (error) {
                 console.error('❌ Error loading folders:', error);
+            }
+        }
+
+        // Folder selection functionality (local only)
+        document.getElementById('folderSelect').addEventListener('change', function(e) {
+            if (e.target.value === 'select_folder') {
+                selectFolderFromDevice();
+            }
+        });
+
+        // File upload functionality (Railway only)
+        document.getElementById('fileUpload').addEventListener('change', function(e) {
+            const files = e.target.files;
+            if (files.length > 0) {
+                uploadFiles(files);
+            }
+        });
+
+
+        async function selectFolderFromDevice() {
+            try {
+                // Use the File System Access API if available (modern browsers)
+                if ('showDirectoryPicker' in window) {
+                    const directoryHandle = await window.showDirectoryPicker();
+                    const folderInfo = await processSelectedFolder(directoryHandle);
+                    if (folderInfo) {
+                        // Store the folder handle globally
+                        selectedFolderHandle = directoryHandle;
+                        
+                        // Reload folders to include the uploaded folder
+                        await loadFolders();
+                        
+                        // Select the new folder
+                        const select = document.getElementById('folderSelect');
+                        select.value = folderInfo.id;
+                        select.dispatchEvent(new Event('change'));
+                    }
+                } else {
+                    // Fallback for older browsers - show a message
+                    alert('Folder selection is not supported in this browser. Please use a modern browser like Chrome, Edge, or Firefox.');
+                }
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    console.error('Folder selection error:', error);
+                    alert('Error selecting folder: ' + error.message);
+                }
+            }
+        }
+
+        async function processSelectedFolder(directoryHandle) {
+            try {
+                // Get the original folder name
+                const originalFolderName = directoryHandle.name || 'Unknown Folder';
+                
+                // Count image files in the selected folder
+                let imageCount = 0;
+                const imageExtensions = ['.jpg', '.jpeg', '.png', '.tiff', '.tif'];
+                const imageFiles = [];
+                
+                for await (const [name, handle] of directoryHandle.entries()) {
+                    if (handle.kind === 'file') {
+                        const ext = name.toLowerCase().substring(name.lastIndexOf('.'));
+                        if (imageExtensions.includes(ext)) {
+                            imageCount++;
+                            imageFiles.push({ name, handle });
+                        }
+                    }
+                }
+                
+                if (imageCount === 0) {
+                    alert('No image files found in the selected folder. Please select a folder containing JPG, PNG, or TIFF images.');
+                    return null;
+                }
+                
+                // Show progress message
+                const progressMsg = `📤 Uploading ${imageCount} images from "${originalFolderName}" to server...`;
+                alert(progressMsg);
+                
+                // Upload images to server with original folder name
+                const uploadResult = await uploadFolderToServer(directoryHandle, imageFiles, originalFolderName);
+                
+                if (uploadResult.success) {
+                    // Create folder info for the uploaded folder
+                    const folderInfo = {
+                        id: uploadResult.folder_path,
+                        name: `${originalFolderName} (${imageCount} images)`,
+                        count: imageCount,
+                        uploaded: true
+                    };
+                    
+                    alert(`✅ Successfully uploaded ${imageCount} images from "${originalFolderName}"! Ready for analysis.`);
+                    return folderInfo;
+                } else {
+                    alert(`❌ Upload failed: ${uploadResult.error}`);
+                    return null;
+                }
+                
+            } catch (error) {
+                console.error('Error processing folder:', error);
+                alert(`❌ Error processing folder: ${error.message}`);
+                return null;
+            }
+        }
+
+        async function uploadFolderToServer(directoryHandle, imageFiles, originalFolderName) {
+            try {
+                const formData = new FormData();
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                
+                // Create a safe folder name with original name + timestamp
+                const safeOriginalName = originalFolderName.replace(/[^a-zA-Z0-9_-]/g, '_');
+                const folderName = `${safeOriginalName}_${timestamp}`;
+                
+                // Add folder name
+                formData.append('folder_name', folderName);
+                formData.append('original_folder_name', originalFolderName);
+                
+                // Upload each image file
+                for (const fileInfo of imageFiles) {
+                    const file = await fileInfo.handle.getFile();
+                    formData.append('files', file);
+                }
+                
+                const response = await fetch('/api/upload-folder', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                return result;
+                
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        // File upload function for Railway environments
+        async function uploadFiles(files) {
+            const uploadStatus = document.getElementById('uploadStatus');
+            const folderNameInput = document.getElementById('folderNameInput');
+            
+            // Show upload status
+            uploadStatus.style.display = 'block';
+            uploadStatus.innerHTML = '<div style="color: #007bff;">📤 Uploading files...</div>';
+            
+            try {
+                const formData = new FormData();
+                
+                // Add files to form data
+                for (let i = 0; i < files.length; i++) {
+                    formData.append('files', files[i]);
+                }
+                
+                // Add folder name if provided
+                const folderName = folderNameInput.value.trim() || 'uploaded_photos';
+                formData.append('folder_name', folderName);
+                
+                const response = await fetch('/api/upload-folder', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    uploadStatus.innerHTML = `<div style="color: #28a745;">✅ ${result.message}</div>`;
+                    
+                    // Clear the file input
+                    document.getElementById('fileUpload').value = '';
+                    folderNameInput.value = '';
+                    
+                    // Reload folders to include the new upload
+                    await loadFolders();
+                    
+                    // Auto-select the newly uploaded folder
+                    const select = document.getElementById('folderSelect');
+                    for (let option of select.options) {
+                        if (option.value === result.folder_path) {
+                            option.selected = true;
+                            select.dispatchEvent(new Event('change'));
+                            break;
+                        }
+                    }
+                    
+                    // Hide status after 3 seconds
+                    setTimeout(() => {
+                        uploadStatus.style.display = 'none';
+                    }, 3000);
+                    
+                } else {
+                    uploadStatus.innerHTML = `<div style="color: #dc3545;">❌ Upload failed: ${result.error || 'Unknown error'}</div>`;
+                }
+                
+            } catch (error) {
+                console.error('Upload error:', error);
+                uploadStatus.innerHTML = `<div style="color: #dc3545;">❌ Upload failed: ${error.message}</div>`;
+            }
+        }
+
+        function addSelectedFolderToDropdown(folderInfo) {
+            const select = document.getElementById('folderSelect');
+            
+            // Create new option
+            const option = document.createElement('option');
+            option.value = folderInfo.id;
+            option.textContent = folderInfo.name;
+            
+            // Insert before the "Choose folder from device..." option
+            const selectFolderOption = select.querySelector('option[value="select_folder"]');
+            if (selectFolderOption) {
+                select.insertBefore(option, selectFolderOption);
+            } else {
+                select.appendChild(option);
+            }
+            
+            // Update total images display
+            const totalImagesElement = document.getElementById('totalImages');
+            if (totalImagesElement) {
+                totalImagesElement.textContent = folderInfo.count;
             }
         }
 
@@ -2351,28 +2639,39 @@
         if (folderSelect) {
             folderSelect.addEventListener('change', function() {
                 const selectedOption = this.options[this.selectedIndex];
-                if (selectedOption.value) {
-                    const match = selectedOption.textContent.match(/\((\d+) images\)/);
-                    if (match) {
-                        const totalImages = parseInt(match[1]);
+                if (selectedOption.value && selectedOption.value !== 'select_folder') {
+                    // Check if it's a selected folder (starts with 'selected_folder_')
+                    if (selectedOption.value.startsWith('selected_folder_')) {
+                        // For selected folders, we already have the count stored
                         const totalImagesElement = document.getElementById('totalImages');
-                        if (totalImagesElement) totalImagesElement.textContent = totalImages;
-                        
-                        // Ensure sliders are updated
-                        if (typeof updateSliderMax === 'function') {
-                            updateSliderMax();
+                        if (totalImagesElement) {
+                            const match = selectedOption.textContent.match(/\((\d+) images\)/);
+                            if (match) {
+                                totalImagesElement.textContent = match[1];
+                            }
                         }
-                        
+                    } else {
+                        // For regular folders, extract count from text
+                        const match = selectedOption.textContent.match(/\((\d+) images\)/);
+                        if (match) {
+                            const totalImages = parseInt(match[1]);
+                            const totalImagesElement = document.getElementById('totalImages');
+                            if (totalImagesElement) totalImagesElement.textContent = totalImages;
+                        }
+                    }
+                    
+                    // Ensure sliders are updated
+                    if (typeof updateSliderMax === 'function') {
+                        updateSliderMax();
                     }
                 } else {
                     const totalImagesElement = document.getElementById('totalImages');
                     if (totalImagesElement) totalImagesElement.textContent = '-';
                         
-                        // Ensure sliders are updated
-                        if (typeof updateSliderMax === 'function') {
-                            updateSliderMax();
-                        }
-                    
+                    // Ensure sliders are updated
+                    if (typeof updateSliderMax === 'function') {
+                        updateSliderMax();
+                    }
                 }
                 window.updateLabels();
             });
