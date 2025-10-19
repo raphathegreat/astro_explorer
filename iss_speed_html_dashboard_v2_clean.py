@@ -2037,7 +2037,7 @@ def create_plot_data_from_filtered(filtered_data, speed_mode='dynamic_gsd'):
 
 @app.route('/')
 def index():
-    return render_template('dashboard_v2_clean.html')
+    return render_template('dashboard.html')
 
 @app.route('/health')
 def health():
