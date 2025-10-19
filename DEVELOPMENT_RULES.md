@@ -247,7 +247,7 @@ When encountering issues, follow this systematic approach:
    - Share knowledge with team members
 
 ### 📊 **Investigation Tools**
-- **Log Files**: Check `logs/` directory for detailed error information
+- **Log Files**: Check `logs/` directory for detailed error information, including `dashboard_application.log`
 - **Test Suite**: Use `python3 realistic_test.py` for comprehensive validation
 - **Git History**: Review recent commits for potential causes
 - **Railway Logs**: Monitor deployment and runtime logs
