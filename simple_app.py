@@ -4,9 +4,15 @@ Ultra-simple Flask app for Railway testing
 """
 
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, Response, request
 
 app = Flask(__name__)
+
+# Force all routes to be handled by Flask
+@app.before_request
+def before_request():
+    print(f"🔍 Request to: {request.path}")
+    return None
 
 @app.route('/')
 def home():
@@ -41,6 +47,15 @@ def status():
         "version": "test-1.0",
         "port": os.environ.get('PORT', 'not_set')
     })
+
+# Catch-all route to handle any unmatched paths
+@app.route('/<path:path>')
+def catch_all(path):
+    return jsonify({
+        "message": f"Route /{path} not found",
+        "available_routes": ["/", "/health", "/status", "/test"],
+        "note": "This request was handled by Flask"
+    }), 404
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5003))
