@@ -13,4 +13,4 @@ cmds = [
 cmds = ["echo 'Build phase complete'"]
 
 [start]
-cmd = "/opt/venv/bin/python simple_app.py"
+cmd = "/opt/venv/bin/python test_app.py"
