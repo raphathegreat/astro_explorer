@@ -2034,6 +2034,11 @@ def create_plot_data_from_filtered(filtered_data, speed_mode='dynamic_gsd'):
 def index():
     return render_template('dashboard_v2_clean.html')
 
+@app.route('/health')
+def health():
+    """Simple health check endpoint for Railway"""
+    return jsonify({"status": "healthy", "message": "AstroPi Explorer Dashboard is running"})
+
 # New API endpoints for improved workflow
 
 @app.route('/api/process-range', methods=['POST'])
@@ -5840,8 +5845,13 @@ if __name__ == '__main__':
     load_most_recent_cache()
     
     print("🚀 Starting ISS Speed Analysis Dashboard...")
-    print("📊 Open your browser and go to: http://localhost:5003")
+    
+    # Get port from environment variable (Railway) or use default
+    port = int(os.environ.get('PORT', 5003))
+    debug_mode = os.environ.get('FLASK_ENV', 'development') == 'development'
+    
+    print(f"📊 Open your browser and go to: http://localhost:{port}")
     print("🔄 The dashboard will automatically detect photos-* folders in the project directory")
     
-    # Use port 5002 instead of 5000/5001 to avoid conflicts
-    app.run(debug=True, host='0.0.0.0', port=5003)
+    # Use environment port for Railway deployment
+    app.run(debug=debug_mode, host='0.0.0.0', port=port)
