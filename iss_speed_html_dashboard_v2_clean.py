@@ -2037,7 +2037,18 @@ def index():
 @app.route('/health')
 def health():
     """Simple health check endpoint for Railway"""
-    return jsonify({"status": "healthy", "message": "AstroPi Explorer Dashboard is running"})
+    try:
+        # Basic health check - just return success
+        return jsonify({
+            "status": "healthy", 
+            "message": "AstroPi Explorer Dashboard is running",
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error", 
+            "message": f"Health check failed: {str(e)}"
+        }), 500
 
 # New API endpoints for improved workflow
 
@@ -5841,17 +5852,31 @@ if __name__ == '__main__':
         
         return False
     
-    # Try to load the most recent cache on startup
-    load_most_recent_cache()
-    
     print("🚀 Starting ISS Speed Analysis Dashboard...")
+    print("🔧 Initializing Flask application...")
     
     # Get port from environment variable (Railway) or use default
     port = int(os.environ.get('PORT', 5003))
     debug_mode = os.environ.get('FLASK_ENV', 'development') == 'development'
     
+    print(f"📊 Port: {port}")
+    print(f"🔧 Debug mode: {debug_mode}")
     print(f"📊 Open your browser and go to: http://localhost:{port}")
     print("🔄 The dashboard will automatically detect photos-* folders in the project directory")
+    print("✅ Flask app ready to start...")
+    
+    # Load cache in background thread to avoid blocking startup
+    def load_cache_background():
+        try:
+            print("🔄 Loading cache in background...")
+            load_most_recent_cache()
+            print("✅ Cache loading completed")
+        except Exception as e:
+            print(f"⚠️ Background cache loading failed: {e}")
+    
+    # Start cache loading in background
+    cache_thread = threading.Thread(target=load_cache_background, daemon=True)
+    cache_thread.start()
     
     # Use environment port for Railway deployment
     app.run(debug=debug_mode, host='0.0.0.0', port=port)
