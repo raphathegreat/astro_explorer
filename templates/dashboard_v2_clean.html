@@ -1278,9 +1278,6 @@
                     <select id="folderSelect">
                         <option value="">Select a folder...</option>
                     </select>
-                    <div id="noFoldersMessage" style="display: none; margin-top: 8px; padding: 8px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; font-size: 14px; color: #6c757d;">
-                        ℹ️ No photo folders found. Please add photos-* folders to your project directory.
-                    </div>
                 </div>
                 <!-- Railway environment: File upload -->
                 <div id="railwayFileUpload" class="control-group" style="display: none;">
@@ -2382,17 +2379,6 @@
                     select.appendChild(option);
                 });
                 
-                // Show helpful message if no folders found
-                const noFoldersMessage = document.getElementById('noFoldersMessage');
-                if (folders.length === 0) {
-                    if (noFoldersMessage) {
-                        noFoldersMessage.style.display = 'block';
-                    }
-                } else {
-                    if (noFoldersMessage) {
-                        noFoldersMessage.style.display = 'none';
-                    }
-                }
                 
                 // Add the "Choose folder from device..." option at the end (only for local)
                 const railwayUpload = document.getElementById('railwayFileUpload');
