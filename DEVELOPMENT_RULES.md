@@ -1,99 +1,252 @@
-# Development Rules and Guidelines
+# 🚀 AstroPi Explorer - Development Rules
 
-This document contains the development rules and guidelines for the ISS Speed Analysis Dashboard project.
+## 📋 **Core Development Workflow**
 
-## Rule 1: Test-Driven Development (TDD)
+### 🎯 **Rule 1: Always Work on Feature Branches**
+- **NEVER** make changes directly on the `main` branch
+- **ALWAYS** create a new branch from `main` for any changes
+- Use descriptive branch names: `feature/description`, `fix/issue`, `enhancement/feature`
 
-- Create test cases before writing code
-- Execute tests to validate the code
-- Run the full test pack and ensure it's updated
-- **Never amend tests to make code pass** - tests define requirements
+### 🔄 **Rule 2: Branch Creation Process**
+```bash
+# 1. Ensure main is up to date
+git checkout main
+git pull origin main
 
-## Rule 2: Version Archiving
+# 2. Create and switch to new branch
+git checkout -b feature/your-feature-name
 
-- **ALWAYS create a backup before making ANY code changes** using the version control system
-- Use: `python3 version_control.py backup "Description of changes"`
-- See `VERSION_CONTROL_WORKFLOW.md` for detailed instructions
-- Use: `python3 version_control.py restore <version_name>` to rollback if needed
-- Maintain organized version history in `versions/` folder with timestamped backups
+# 3. Make your changes
+# ... edit files ...
 
-## Rule 3: Test Pack
+# 4. Test your changes
+python3 realistic_test.py
 
-- `realistic_test.py` is the designated test pack
-- Execute and update it with new test cases
-- Use it to validate all changes
-- Ensure comprehensive test coverage
+# 5. Commit changes
+git add .
+git commit -m "feat: Add your feature description"
 
-## Rule 4: Cache Maintenance for Section 2 Changes
+# 6. Push branch to GitHub
+git push origin feature/your-feature-name
+```
 
-When making changes to section 2 (algorithm parameters, processing options, or any configuration that affects data processing), the caching system must be updated accordingly if required.
+### ✅ **Rule 3: Testing Requirements**
+- **MUST** run the test suite before merging: `python3 realistic_test.py`
+- **MUST** achieve 100% test pass rate (51/51 tests)
+- **MUST** test locally to ensure UI/functionality works as expected
+- **MUST** verify Railway deployment works (if applicable)
 
-This includes:
-- Updating cache key generation to include new parameters
-- Ensuring cache invalidation works with new parameter combinations
-- Testing cache functionality with the new parameters
-- Updating the comprehensive cache tests to cover new parameter combinations
+### 🔀 **Rule 4: Merge to Production Process**
+```bash
+# 1. Ensure all tests pass
+python3 realistic_test.py
 
-The cache system must remain consistent with all section 2 functionality.
+# 2. Switch to main branch
+git checkout main
+git pull origin main
 
-## Rule 5: Issue Investigation Protocol
+# 3. Merge feature branch
+git merge feature/your-feature-name
 
-**When the user raises an issue or reports a problem, ALWAYS check the application logs from the last restart before attempting to diagnose or fix the issue.**
+# 4. Push to production
+git push origin main
 
-### Log Files to Check:
-- `dashboard_application.log` - Backend API calls, data processing, statistics
-- `app_output.log` - Application startup and general output
+# 5. Clean up feature branch
+git branch -d feature/your-feature-name
+git push origin --delete feature/your-feature-name
+```
 
-### Benefits:
-- Complete understanding of what happened without requiring user to copy-paste any data or console logs
-- Logs provide exact API calls, parameters, data processing steps, and results
-- Faster debugging and more accurate fixes
+## 🏷️ **Branch Naming Conventions**
 
-### Implementation:
-- Logs are automatically generated when the application runs
-- All API endpoints log their calls and responses
-- Frontend actions are logged to browser console with `🎬 ACTION:` prefix
-- Backend processing is logged with structured information
+### 📝 **Feature Branches**
+- `feature/dashboard-ui-improvements`
+- `feature/add-new-algorithm`
+- `feature/performance-optimization`
 
-## Rule 6: GSD Configuration Default Behavior
+### 🐛 **Bug Fix Branches**
+- `fix/dropdown-not-working`
+- `fix/railway-deployment-issue`
+- `fix/cache-corruption-bug`
 
-- GSD (Ground Sample Distance) configuration should be **disabled by default**
-- Users must explicitly enable custom GSD to override the default value
-- This prevents unintended speed recalculations when no filters are applied
-- Ensures consistent behavior when clicking refresh without applying filters
+### ⚡ **Enhancement Branches**
+- `enhancement/improve-test-coverage`
+- `enhancement/optimize-image-processing`
+- `enhancement/add-user-guidance`
 
-## Rule 7: Filter Application Logic
+### 🔧 **Hotfix Branches** (for urgent production fixes)
+- `hotfix/critical-security-patch`
+- `hotfix/railway-crash-fix`
 
-- Only send enabled filters to the backend
-- Empty filter objects should be sent when no filters are applied
-- This ensures the backend uses raw data when no filters are intended
-- Prevents unintended filter applications
+## 📊 **Testing Standards**
+
+### 🧪 **Test Suite Requirements**
+- **All 51 tests MUST pass** before merging to main
+- **No test modifications** to make tests pass - fix the actual issues
+- **Test isolation** - ensure tests don't interfere with each other
+- **Coverage validation** - maintain ~90% code coverage
+
+### 🔍 **Local Testing Checklist**
+- [ ] Run full test suite: `python3 realistic_test.py`
+- [ ] Test UI functionality manually
+- [ ] Verify file upload works (if applicable)
+- [ ] Check dropdown functionality
+- [ ] Test algorithm processing
+- [ ] Verify cache system works
+
+### ☁️ **Railway Testing Checklist**
+- [ ] Verify deployment succeeds
+- [ ] Test health endpoint: `/health`
+- [ ] Verify UI matches local version
+- [ ] Test file upload functionality
+- [ ] Check all sections work correctly
+
+## 📝 **Commit Message Standards**
+
+### 🎯 **Format**
+```
+type: Brief description (50 chars max)
+
+Detailed explanation of what was changed and why.
+Include any breaking changes or important notes.
+```
+
+### 📋 **Types**
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `enhancement:` - Improvement to existing feature
+- `refactor:` - Code refactoring
+- `test:` - Test improvements
+- `docs:` - Documentation updates
+- `chore:` - Maintenance tasks
+
+### ✅ **Examples**
+```
+feat: Add file upload functionality for Railway deployment
+
+- Implemented multi-file upload with progress tracking
+- Added environment detection for local vs Railway
+- Improved user guidance with helpful messaging
+- All 51 tests passing
+```
+
+```
+fix: Resolve dropdown population issue on Railway
+
+- Fixed empty dropdown when no photos-* folders exist
+- Added helpful messaging for users
+- Improved file upload UI styling
+- Verified with comprehensive testing
+```
+
+## 🚫 **Prohibited Actions**
+
+### ❌ **Never Do These**
+- Make direct commits to `main` branch
+- Merge branches without running tests
+- Skip testing for "small" changes
+- Force push to `main` branch
+- Delete the `main` branch
+- Work on multiple features in the same branch
+
+### ⚠️ **Emergency Exceptions**
+- Only for critical production issues
+- Must create `hotfix/` branch immediately after
+- Must run tests before merging
+- Must document the emergency in commit message
+
+## 🔄 **Railway Deployment Process**
+
+### 🚀 **Automatic Deployment**
+- Railway automatically deploys when `main` branch is updated
+- No manual deployment needed
+- Monitor Railway logs for deployment status
+
+### 🔍 **Deployment Verification**
+1. Check Railway dashboard for build status
+2. Test health endpoint: `https://astropi-explorer.up.railway.app/health`
+3. Verify UI matches local version
+4. Test core functionality
+
+## 📚 **Documentation Requirements**
+
+### 📖 **Code Documentation**
+- Document complex algorithms and functions
+- Include docstrings for all public functions
+- Maintain README.md with setup instructions
+- Update DEPLOYMENT_GUIDE.md for deployment changes
+
+### 🧪 **Test Documentation**
+- Document test scenarios and expected outcomes
+- Maintain test coverage reports
+- Document any test modifications or additions
+
+## 🎯 **Quality Gates**
+
+### ✅ **Pre-Merge Checklist**
+- [ ] All tests pass (51/51)
+- [ ] Code follows style guidelines
+- [ ] Documentation updated
+- [ ] Commit messages follow standards
+- [ ] Local testing completed
+- [ ] Railway deployment verified (if applicable)
+
+### 🚀 **Post-Merge Verification**
+- [ ] Railway deployment successful
+- [ ] Health endpoint responding
+- [ ] UI matches expected design
+- [ ] Core functionality working
+- [ ] No regressions detected
+
+## 🔧 **Development Environment Setup**
+
+### 💻 **Local Development**
+```bash
+# Clone repository
+git clone https://github.com/raphathegreat/astro_explorer.git
+cd astro_explorer
+
+# Create feature branch
+git checkout -b feature/your-feature-name
+
+# Run tests
+python3 realistic_test.py
+
+# Start development server
+python3 iss_speed_html_dashboard_v2_clean.py
+```
+
+### ☁️ **Railway Integration**
+- Connected to GitHub repository
+- Auto-deploys from `main` branch
+- Environment variables configured
+- Health checks enabled
+
+## 📞 **Support and Escalation**
+
+### 🆘 **When to Ask for Help**
+- Tests failing and unsure how to fix
+- Railway deployment issues
+- Complex algorithm or UI problems
+- Performance optimization needs
+
+### 📋 **Information to Provide**
+- Branch name and commit hash
+- Test output and error messages
+- Railway deployment logs
+- Steps to reproduce issues
 
 ---
 
-## How to Use These Rules
+## 🎉 **Remember: Quality First, Speed Second**
 
-1. **Before making any changes**: Review relevant rules
-2. **During development**: Follow TDD principles (Rule 1)
-3. **When changing Section 2**: Update caching accordingly (Rule 4)
-4. **When user reports issues**: Check logs first (Rule 5)
-5. **After changes**: Run the test pack to validate (Rule 3)
-6. **Before deployment**: Archive working versions (Rule 2)
+**Every change should be:**
+- ✅ **Tested** thoroughly
+- ✅ **Documented** properly  
+- ✅ **Reviewed** before merging
+- ✅ **Deployed** safely to production
 
-## Log File Locations
-
-- **Backend Logs**: `/Users/astropi/Backup_esaiss/dashboard_application.log`
-- **Application Output**: `/Users/astropi/Backup_esaiss/app_output.log`
-- **Frontend Logs**: Browser console (Developer Tools → Console)
-
-## Quick Reference
-
-| Rule | Purpose | When to Apply |
-|------|---------|---------------|
-| 1 | TDD | Before writing any code |
-| 2 | Version Control | After successful changes |
-| 3 | Testing | After any modifications |
-| 4 | Cache Management | When changing Section 2 |
-| 5 | Issue Debugging | When user reports problems |
-| 6 | GSD Defaults | UI/UX consistency |
-| 7 | Filter Logic | Frontend-backend communication |
+**This workflow ensures:**
+- 🛡️ **Stable production** environment
+- 🧪 **Reliable testing** process
+- 🔄 **Smooth deployments** to Railway
+- 👥 **Team collaboration** best practices
