@@ -1260,6 +1260,67 @@
                 margin-top: 15px;
             }
             
+            /* Upload Progress Bar Styles */
+            #uploadProgressContainer {
+                background: #f8f9fa;
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
+                padding: 15px;
+                margin-top: 10px;
+            }
+            
+            #uploadProgressBar {
+                position: relative;
+                overflow: hidden;
+            }
+            
+            #uploadProgressFill {
+                position: relative;
+                transition: width 0.3s ease;
+            }
+            
+            #uploadProgressFill::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                right: 0;
+                background-image: linear-gradient(
+                    -45deg,
+                    rgba(255, 255, 255, .2) 25%,
+                    transparent 25%,
+                    transparent 50%,
+                    rgba(255, 255, 255, .2) 50%,
+                    rgba(255, 255, 255, .2) 75%,
+                    transparent 75%,
+                    transparent
+                );
+                background-size: 20px 20px;
+                animation: progress-bar-stripes 1s linear infinite;
+            }
+            
+            @keyframes progress-bar-stripes {
+                0% {
+                    background-position: 20px 0;
+                }
+                100% {
+                    background-position: 0 0;
+                }
+            }
+            
+            #uploadProgressText {
+                font-weight: 600;
+            }
+            
+            #uploadProgressPercent {
+                font-weight: 700;
+            }
+            
+            #uploadProgressDetails {
+                font-style: italic;
+            }
+            
         /* Mobile and Tablet Responsive Design */
         @media (max-width: 768px) {
             body {
@@ -1419,6 +1480,21 @@
             .comparison-actions .button {
                 width: 100%;
             }
+            
+            /* Mobile progress bar adjustments */
+            #uploadProgressContainer {
+                padding: 10px;
+                margin-top: 8px;
+            }
+            
+            #uploadProgressText,
+            #uploadProgressPercent {
+                font-size: 13px;
+            }
+            
+            #uploadProgressDetails {
+                font-size: 11px;
+            }
         }
         
         /* iPad and Tablet Landscape */
@@ -1526,7 +1602,18 @@
                     </div>
                 </div>
             </div>
-            <div id="uploadStatus" style="margin-top: 10px; display: none;"></div>
+            <div id="uploadStatus" style="margin-top: 10px; display: none;">
+                <div id="uploadProgressContainer" style="display: none; margin-top: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <span id="uploadProgressText" style="font-size: 14px; color: #007bff;">Uploading...</span>
+                        <span id="uploadProgressPercent" style="font-size: 14px; color: #007bff; font-weight: bold;">0%</span>
+                    </div>
+                    <div id="uploadProgressBar" style="width: 100%; height: 8px; background-color: #e9ecef; border-radius: 4px; overflow: hidden;">
+                        <div id="uploadProgressFill" style="width: 0%; height: 100%; background: linear-gradient(90deg, #007bff, #0056b3); transition: width 0.3s ease; border-radius: 4px;"></div>
+                    </div>
+                    <div id="uploadProgressDetails" style="font-size: 12px; color: #6c757d; margin-top: 5px;"></div>
+                </div>
+            </div>
                 <div class="control-group range-slider-group">
                     <label>Image Range:</label>
                     <div class="range-container">
@@ -2644,6 +2731,57 @@
         });
 
 
+        // Progress tracking functions
+        function showUploadProgress() {
+            const uploadStatus = document.getElementById('uploadStatus');
+            const uploadProgressContainer = document.getElementById('uploadProgressContainer');
+            
+            uploadStatus.style.display = 'block';
+            uploadProgressContainer.style.display = 'block';
+            
+            // Reset progress
+            updateUploadProgress(0, 'Preparing upload...', '');
+        }
+        
+        function updateUploadProgress(percent, text, details) {
+            const progressFill = document.getElementById('uploadProgressFill');
+            const progressText = document.getElementById('uploadProgressText');
+            const progressPercent = document.getElementById('uploadProgressPercent');
+            const progressDetails = document.getElementById('uploadProgressDetails');
+            
+            progressFill.style.width = `${percent}%`;
+            progressText.textContent = text;
+            progressPercent.textContent = `${Math.round(percent)}%`;
+            progressDetails.textContent = details;
+        }
+        
+        function hideUploadProgress() {
+            const uploadProgressContainer = document.getElementById('uploadProgressContainer');
+            uploadProgressContainer.style.display = 'none';
+        }
+        
+        function showUploadSuccess(message) {
+            const uploadStatus = document.getElementById('uploadStatus');
+            uploadStatus.innerHTML = `<div style="color: #28a745;">✅ ${message}</div>`;
+            hideUploadProgress();
+            
+            // Hide status after 3 seconds
+            setTimeout(() => {
+                uploadStatus.style.display = 'none';
+            }, 3000);
+        }
+        
+        function showUploadError(message) {
+            const uploadStatus = document.getElementById('uploadStatus');
+            uploadStatus.innerHTML = `<div style="color: #dc3545;">❌ ${message}</div>`;
+            hideUploadProgress();
+            
+            // Hide status after 5 seconds
+            setTimeout(() => {
+                uploadStatus.style.display = 'none';
+            }, 5000);
+        }
+
         async function selectFolderFromDevice() {
             try {
                 // Use the File System Access API if available (modern browsers)
@@ -2742,55 +2880,92 @@
                 formData.append('folder_name', folderName);
                 formData.append('original_folder_name', originalFolderName);
                 
-                // Upload each image file
-                for (const fileInfo of imageFiles) {
+                // Show progress bar
+                showUploadProgress();
+                updateUploadProgress(10, 'Preparing files...', `Processing ${imageFiles.length} images`);
+                
+                // Upload each image file with progress tracking
+                for (let i = 0; i < imageFiles.length; i++) {
+                    const fileInfo = imageFiles[i];
                     const file = await fileInfo.handle.getFile();
                     formData.append('files', file);
+                    
+                    // Update progress
+                    const progress = 10 + ((i + 1) / imageFiles.length) * 70; // 10-80% for file preparation
+                    updateUploadProgress(progress, 'Preparing files...', `Processing file ${i + 1} of ${imageFiles.length}: ${file.name}`);
+                    
+                    // Small delay to show progress
+                    await new Promise(resolve => setTimeout(resolve, 50));
                 }
+                
+                updateUploadProgress(85, 'Uploading to server...', `Sending ${imageFiles.length} files to server`);
                 
                 const response = await fetch('/api/upload-folder', {
                     method: 'POST',
                     body: formData
                 });
                 
+                updateUploadProgress(95, 'Processing upload...', 'Server is processing your files');
+                
                 const result = await response.json();
+                
+                if (result.success) {
+                    updateUploadProgress(100, 'Upload complete!', `Successfully uploaded ${imageFiles.length} files`);
+                    setTimeout(() => {
+                        showUploadSuccess(result.message);
+                    }, 500);
+                } else {
+                    showUploadError(result.error || 'Upload failed');
+                }
+                
                 return result;
                 
             } catch (error) {
+                showUploadError(`Upload failed: ${error.message}`);
                 return { success: false, error: error.message };
             }
         }
 
         // File upload function for Railway environments
         async function uploadFiles(files) {
-            const uploadStatus = document.getElementById('uploadStatus');
             const folderNameInput = document.getElementById('folderNameInput');
             
-            // Show upload status
-            uploadStatus.style.display = 'block';
-            uploadStatus.innerHTML = '<div style="color: #007bff;">📤 Uploading files...</div>';
-            
             try {
+                // Show progress bar
+                showUploadProgress();
+                updateUploadProgress(10, 'Preparing files...', `Processing ${files.length} files`);
+                
                 const formData = new FormData();
                 
-                // Add files to form data
+                // Add files to form data with progress tracking
                 for (let i = 0; i < files.length; i++) {
                     formData.append('files', files[i]);
+                    
+                    // Update progress
+                    const progress = 10 + ((i + 1) / files.length) * 60; // 10-70% for file preparation
+                    updateUploadProgress(progress, 'Preparing files...', `Processing file ${i + 1} of ${files.length}: ${files[i].name}`);
+                    
+                    // Small delay to show progress
+                    await new Promise(resolve => setTimeout(resolve, 30));
                 }
                 
                 // Add folder name if provided
                 const folderName = folderNameInput.value.trim() || 'uploaded_photos';
                 formData.append('folder_name', folderName);
                 
+                updateUploadProgress(75, 'Uploading to server...', `Sending ${files.length} files to server`);
+                
                 const response = await fetch('/api/upload-folder', {
                     method: 'POST',
                     body: formData
                 });
                 
+                updateUploadProgress(90, 'Processing upload...', 'Server is processing your files');
+                
                 const result = await response.json();
                 
                 if (response.ok && result.success) {
-                    uploadStatus.innerHTML = `<div style="color: #28a745;">✅ ${result.message}</div>`;
+                    updateUploadProgress(100, 'Upload complete!', `Successfully uploaded ${files.length} files`);
                     
                     // Clear the file input
                     document.getElementById('fileUpload').value = '';
@@ -2809,18 +2984,16 @@
                         }
                     }
                     
-                    // Hide status after 3 seconds
                     setTimeout(() => {
-                        uploadStatus.style.display = 'none';
-                    }, 3000);
+                        showUploadSuccess(result.message);
+                    }, 500);
                     
                 } else {
-                    uploadStatus.innerHTML = `<div style="color: #dc3545;">❌ Upload failed: ${result.error || 'Unknown error'}</div>`;
+                    showUploadError(result.error || 'Upload failed');
                 }
                 
             } catch (error) {
-                console.error('Upload error:', error);
-                uploadStatus.innerHTML = `<div style="color: #dc3545;">❌ Upload failed: ${error.message}</div>`;
+                showUploadError(`Upload failed: ${error.message}`);
             }
         }
 
