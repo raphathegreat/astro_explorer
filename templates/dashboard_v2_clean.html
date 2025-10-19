@@ -1357,6 +1357,11 @@
                 gap: 15px;
             }
             
+            /* Mobile delete folder adjustments */
+            .control-group[style*="margin-left: 20px"] {
+                margin-left: 0 !important;
+            }
+            
             .control-group {
                 flex-direction: column;
                 align-items: stretch;
@@ -1581,14 +1586,14 @@
         <div class="section">
             <div class="section-title">Section 1: Photo Selection</div>
             <div class="control-row">
-                <div class="control-group">
+                <div class="control-group" style="flex: 1;">
                     <label>Photo Folder:</label>
                     <select id="folderSelect">
                         <option value="">Select a folder...</option>
                     </select>
                 </div>
                 <!-- Railway environment: File upload -->
-                <div id="railwayFileUpload" class="control-group" style="display: none;">
+                <div id="railwayFileUpload" class="control-group" style="display: none; flex: 1;">
                     <label>Upload Photos:</label>
                     <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
                         <input type="file" id="fileUpload" multiple accept=".jpg,.jpeg,.png,.tiff,.tif" style="display: none;">
@@ -1599,6 +1604,21 @@
                     </div>
                     <div style="margin-top: 8px; font-size: 13px; color: #6c757d;">
                         💡 Select multiple image files (.jpg, .png, .tiff) to upload and analyze
+                    </div>
+                </div>
+                <!-- Delete uploaded folders subsection -->
+                <div class="control-group" style="flex: 1; margin-left: 20px;">
+                    <label>Manage Uploaded Folders:</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <select id="deleteFolderSelect" style="flex: 1;">
+                            <option value="">Select folder to delete...</option>
+                        </select>
+                        <button type="button" id="deleteFolderBtn" onclick="deleteSelectedFolder()" style="padding: 8px 16px; background: linear-gradient(135deg, #dc3545, #c82333); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" disabled>
+                            🗑️ Delete
+                        </button>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 13px; color: #6c757d;">
+                        ⚠️ Delete uploaded folders to free up storage space
                     </div>
                 </div>
             </div>
@@ -2255,6 +2275,7 @@
         window.onload = function() {
             detectEnvironment();
             loadFolders();
+            loadDeleteFolders();
             setupFilterEventListeners();
             setupRangeSliders();
             setupTooltips();
@@ -2710,6 +2731,10 @@
                 }
                 
                 console.log('📁 Folder dropdown populated successfully');
+                
+                // Also reload delete folders
+                await loadDeleteFolders();
+                
             } catch (error) {
                 console.error('❌ Error loading folders:', error);
             }
@@ -2729,6 +2754,88 @@
                 uploadFiles(files);
             }
         });
+
+        // Delete folder functionality
+        document.getElementById('deleteFolderSelect').addEventListener('change', function(e) {
+            const deleteBtn = document.getElementById('deleteFolderBtn');
+            deleteBtn.disabled = !e.target.value;
+        });
+
+        async function deleteSelectedFolder() {
+            const deleteSelect = document.getElementById('deleteFolderSelect');
+            const folderPath = deleteSelect.value;
+            
+            if (!folderPath) {
+                alert('Please select a folder to delete');
+                return;
+            }
+            
+            // Get folder name for confirmation
+            const folderName = deleteSelect.options[deleteSelect.selectedIndex].text;
+            
+            // Confirmation dialog
+            const confirmed = confirm(`Are you sure you want to delete "${folderName}"?\n\nThis action cannot be undone and will permanently remove all files in this folder.`);
+            
+            if (!confirmed) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/delete-folder', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        folder_path: folderPath
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    alert(`✅ ${result.message}`);
+                    
+                    // Clear the delete dropdown
+                    deleteSelect.value = '';
+                    document.getElementById('deleteFolderBtn').disabled = true;
+                    
+                    // Reload both folder dropdowns
+                    await loadFolders();
+                    await loadDeleteFolders();
+                    
+                } else {
+                    alert(`❌ Delete failed: ${result.error || 'Unknown error'}`);
+                }
+                
+            } catch (error) {
+                alert(`❌ Delete failed: ${error.message}`);
+            }
+        }
+
+        async function loadDeleteFolders() {
+            try {
+                const response = await fetch('/api/folders');
+                const folders = await response.json();
+                
+                const deleteSelect = document.getElementById('deleteFolderSelect');
+                deleteSelect.innerHTML = '<option value="">Select folder to delete...</option>';
+                
+                // Only show uploaded folders in delete dropdown
+                folders.forEach(folder => {
+                    if (folder.name.startsWith('uploaded_photos/')) {
+                        const option = document.createElement('option');
+                        option.value = folder.name;
+                        const displayText = folder.display_name || `${folder.name} (${folder.count || 0} images)`;
+                        option.textContent = displayText;
+                        deleteSelect.appendChild(option);
+                    }
+                });
+                
+            } catch (error) {
+                console.error('❌ Error loading delete folders:', error);
+            }
+        }
 
 
         // Real upload progress tracking function

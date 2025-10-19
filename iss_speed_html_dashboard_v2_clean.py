@@ -3381,6 +3381,47 @@ def get_environment():
         'supports_folder_selection': not is_railway_deployment()
     })
 
+@app.route('/api/delete-folder', methods=['DELETE'])
+def delete_folder():
+    """Delete an uploaded folder"""
+    try:
+        data = request.get_json()
+        folder_path = data.get('folder_path')
+        
+        if not folder_path:
+            return jsonify({'error': 'No folder path provided'}), 400
+        
+        # Security check: only allow deletion of folders in uploaded_photos directory
+        if not folder_path.startswith('uploaded_photos/'):
+            return jsonify({'error': 'Can only delete uploaded folders'}), 403
+        
+        # Check if folder exists
+        if not os.path.exists(folder_path):
+            return jsonify({'error': 'Folder not found'}), 404
+        
+        # Count files before deletion
+        file_count = 0
+        try:
+            for file in os.listdir(folder_path):
+                if os.path.isfile(os.path.join(folder_path, file)):
+                    file_count += 1
+        except OSError:
+            pass
+        
+        # Delete the folder and all its contents
+        import shutil
+        shutil.rmtree(folder_path)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully deleted folder with {file_count} files',
+            'deleted_folder': folder_path,
+            'files_deleted': file_count
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Delete failed: {str(e)}'}), 500
+
 @app.route('/api/upload-folder', methods=['POST'])
 def upload_folder():
     """Handle folder uploads from File System Access API"""
