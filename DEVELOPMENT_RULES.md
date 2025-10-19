@@ -221,6 +221,37 @@ python3 iss_speed_html_dashboard_v2_clean.py
 - Environment variables configured
 - Health checks enabled
 
+## 🔍 **Issue Investigation Protocol**
+
+### 🎯 **Rule 5: Systematic Problem Solving**
+When encountering issues, follow this systematic approach:
+
+1. **📋 Document the Problem**
+   - Record exact error messages
+   - Note steps to reproduce
+   - Capture relevant logs and screenshots
+
+2. **🔍 Investigate Root Cause**
+   - Check recent changes and commits
+   - Review test results and coverage
+   - Analyze error patterns and frequency
+
+3. **🧪 Test Hypotheses**
+   - Create isolated test cases
+   - Verify fixes with comprehensive testing
+   - Ensure no regressions are introduced
+
+4. **📝 Document Solutions**
+   - Update documentation with fixes
+   - Add preventive measures to development rules
+   - Share knowledge with team members
+
+### 📊 **Investigation Tools**
+- **Log Files**: Check `logs/` directory for detailed error information
+- **Test Suite**: Use `python3 realistic_test.py` for comprehensive validation
+- **Git History**: Review recent commits for potential causes
+- **Railway Logs**: Monitor deployment and runtime logs
+
 ## 📞 **Support and Escalation**
 
 ### 🆘 **When to Ask for Help**
