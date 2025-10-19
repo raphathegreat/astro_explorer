@@ -2731,6 +2731,51 @@
         });
 
 
+        // Real upload progress tracking function
+        function uploadWithProgress(url, formData, progressCallback) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                
+                // Track upload progress
+                xhr.upload.addEventListener('progress', (event) => {
+                    if (event.lengthComputable) {
+                        const progress = (event.loaded / event.total) * 100;
+                        progressCallback(progress);
+                    }
+                });
+                
+                // Handle response
+                xhr.addEventListener('load', () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve({
+                            ok: true,
+                            status: xhr.status,
+                            json: () => Promise.resolve(JSON.parse(xhr.responseText))
+                        });
+                    } else {
+                        reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+                    }
+                });
+                
+                // Handle errors
+                xhr.addEventListener('error', () => {
+                    reject(new Error('Network error during upload'));
+                });
+                
+                // Handle timeout
+                xhr.addEventListener('timeout', () => {
+                    reject(new Error('Upload timeout'));
+                });
+                
+                // Set timeout to 5 minutes for large uploads
+                xhr.timeout = 300000; // 5 minutes
+                
+                // Start upload
+                xhr.open('POST', url);
+                xhr.send(formData);
+            });
+        }
+
         // Progress tracking functions
         function showUploadProgress() {
             const uploadStatus = document.getElementById('uploadStatus');
@@ -2906,9 +2951,11 @@
                 
                 updateUploadProgress(85, 'Uploading to server...', `Sending ${imageFiles.length} files to server`);
                 
-                const response = await fetch('/api/upload-folder', {
-                    method: 'POST',
-                    body: formData
+                // Use XMLHttpRequest for real upload progress tracking
+                const response = await uploadWithProgress('/api/upload-folder', formData, (progress) => {
+                    // Real progress: 85% to 95% based on actual upload progress
+                    const realProgress = 85 + (progress * 0.1); // 85% to 95%
+                    updateUploadProgress(realProgress, 'Uploading to server...', `Uploading: ${Math.round(progress)}% complete`);
                 });
                 
                 updateUploadProgress(95, 'Processing upload...', 'Server is processing your files');
@@ -2961,9 +3008,11 @@
                 
                 updateUploadProgress(75, 'Uploading to server...', `Sending ${files.length} files to server`);
                 
-                const response = await fetch('/api/upload-folder', {
-                    method: 'POST',
-                    body: formData
+                // Use XMLHttpRequest for real upload progress tracking
+                const response = await uploadWithProgress('/api/upload-folder', formData, (progress) => {
+                    // Real progress: 75% to 90% based on actual upload progress
+                    const realProgress = 75 + (progress * 0.15); // 75% to 90%
+                    updateUploadProgress(realProgress, 'Uploading to server...', `Uploading: ${Math.round(progress)}% complete`);
                 });
                 
                 updateUploadProgress(90, 'Processing upload...', 'Server is processing your files');
