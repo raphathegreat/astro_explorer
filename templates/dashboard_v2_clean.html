@@ -2736,8 +2736,8 @@
             const uploadStatus = document.getElementById('uploadStatus');
             const uploadProgressContainer = document.getElementById('uploadProgressContainer');
             
-            uploadStatus.style.display = 'block';
-            uploadProgressContainer.style.display = 'block';
+            if (uploadStatus) uploadStatus.style.display = 'block';
+            if (uploadProgressContainer) uploadProgressContainer.style.display = 'block';
             
             // Reset progress
             updateUploadProgress(0, 'Preparing upload...', '');
@@ -2749,37 +2749,43 @@
             const progressPercent = document.getElementById('uploadProgressPercent');
             const progressDetails = document.getElementById('uploadProgressDetails');
             
-            progressFill.style.width = `${percent}%`;
-            progressText.textContent = text;
-            progressPercent.textContent = `${Math.round(percent)}%`;
-            progressDetails.textContent = details;
+            if (progressFill) progressFill.style.width = `${percent}%`;
+            if (progressText) progressText.textContent = text;
+            if (progressPercent) progressPercent.textContent = `${Math.round(percent)}%`;
+            if (progressDetails) progressDetails.textContent = details;
         }
         
         function hideUploadProgress() {
             const uploadProgressContainer = document.getElementById('uploadProgressContainer');
-            uploadProgressContainer.style.display = 'none';
+            if (uploadProgressContainer) {
+                uploadProgressContainer.style.display = 'none';
+            }
         }
         
         function showUploadSuccess(message) {
             const uploadStatus = document.getElementById('uploadStatus');
-            uploadStatus.innerHTML = `<div style="color: #28a745;">✅ ${message}</div>`;
-            hideUploadProgress();
-            
-            // Hide status after 3 seconds
-            setTimeout(() => {
-                uploadStatus.style.display = 'none';
-            }, 3000);
+            if (uploadStatus) {
+                uploadStatus.innerHTML = `<div style="color: #28a745;">✅ ${message}</div>`;
+                hideUploadProgress();
+                
+                // Hide status after 3 seconds
+                setTimeout(() => {
+                    if (uploadStatus) uploadStatus.style.display = 'none';
+                }, 3000);
+            }
         }
         
         function showUploadError(message) {
             const uploadStatus = document.getElementById('uploadStatus');
-            uploadStatus.innerHTML = `<div style="color: #dc3545;">❌ ${message}</div>`;
-            hideUploadProgress();
-            
-            // Hide status after 5 seconds
-            setTimeout(() => {
-                uploadStatus.style.display = 'none';
-            }, 5000);
+            if (uploadStatus) {
+                uploadStatus.innerHTML = `<div style="color: #dc3545;">❌ ${message}</div>`;
+                hideUploadProgress();
+                
+                // Hide status after 5 seconds
+                setTimeout(() => {
+                    if (uploadStatus) uploadStatus.style.display = 'none';
+                }, 5000);
+            }
         }
 
         async function selectFolderFromDevice() {
