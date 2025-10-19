@@ -1259,6 +1259,238 @@
             .comparison-progress .progress-container {
                 margin-top: 15px;
             }
+            
+        /* Mobile and Tablet Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                border-radius: 5px;
+            }
+            
+            .header {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .header p {
+                font-size: 0.9rem;
+            }
+            
+            .section {
+                padding: 15px;
+            }
+            
+            .section-title {
+                font-size: 1.2rem;
+            }
+            
+            .control-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 15px;
+            }
+            
+            .control-group {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            
+            .control-group label {
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+            
+            .control-group select,
+            .control-group input {
+                padding: 12px;
+                font-size: 16px; /* Prevents zoom on iOS */
+                border-radius: 6px;
+            }
+            
+            .range-container {
+                padding: 15px;
+            }
+            
+            .range-display {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .range-value {
+                padding: 12px;
+                min-width: 80px;
+            }
+            
+            .config-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .settings-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .param-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .algorithm-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .filter-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .comparison-stats {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .algorithm-stats {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .button {
+                padding: 12px 20px;
+                font-size: 16px;
+                min-height: 44px; /* Touch-friendly minimum */
+            }
+            
+            .checkbox-label {
+                font-size: 16px;
+                padding: 8px 0;
+            }
+            
+            .slider-container input[type="range"] {
+                height: 8px;
+            }
+            
+            .slider-container input[type="range"]::-webkit-slider-thumb {
+                width: 24px;
+                height: 24px;
+            }
+            
+            .slider-container input[type="range"]::-moz-range-thumb {
+                width: 24px;
+                height: 24px;
+            }
+            
+            .plot-container {
+                height: 300px;
+            }
+            
+            .image-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .filter-actions,
+            .config-actions,
+            .comparison-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .filter-actions .button,
+            .config-actions .button,
+            .comparison-actions .button {
+                width: 100%;
+            }
+        }
+        
+        /* iPad and Tablet Landscape */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .container {
+                margin: 10px;
+            }
+            
+            .control-row {
+                gap: 15px;
+            }
+            
+            .config-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            }
+            
+            .settings-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+            
+            .param-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+            
+            .algorithm-grid {
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            }
+            
+            .plot-container {
+                height: 350px;
+            }
+        }
+        
+        /* Large Mobile Devices */
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
+            }
+            
+            .header {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 1.3rem;
+            }
+            
+            .section {
+                padding: 10px;
+            }
+            
+            .section-title {
+                font-size: 1.1rem;
+            }
+            
+            .range-container {
+                padding: 10px;
+            }
+            
+            .range-value {
+                padding: 8px;
+                min-width: 60px;
+            }
+            
+            .plot-container {
+                height: 250px;
+            }
+        }
     </style>
 </head>
 <body>
