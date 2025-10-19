@@ -1279,7 +1279,7 @@
                         <option value="">Select a folder...</option>
                     </select>
                     <div id="noFoldersMessage" style="display: none; margin-top: 8px; padding: 8px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; font-size: 14px; color: #6c757d;">
-                        ℹ️ No photo folders found. Please upload photos using the "Choose Files" button below.
+                        ℹ️ No photo folders found. Please add photos-* folders to your project directory.
                     </div>
                 </div>
                 <!-- Railway environment: File upload -->
@@ -1953,19 +1953,14 @@
                 
                 console.log('🌍 Environment detected:', env);
                 
-                if (env.supports_folder_selection) {
-                    // Local environment - folder selection is in dropdown
-                    document.getElementById('railwayFileUpload').style.display = 'none';
-                    console.log('🏠 Local environment: Folder selection enabled in dropdown');
-                } else {
-                    // Railway environment - show file upload
-                    document.getElementById('railwayFileUpload').style.display = 'flex';
-                    console.log('☁️ Railway environment: File upload enabled');
-                }
+                // Always use local UI version (hide file upload section)
+                document.getElementById('railwayFileUpload').style.display = 'none';
+                console.log('🏠 Using local UI version: Folder selection enabled in dropdown');
+                
             } catch (error) {
                 console.error('❌ Error detecting environment:', error);
-                // Default to file upload if detection fails
-                document.getElementById('railwayFileUpload').style.display = 'flex';
+                // Default to local UI version
+                document.getElementById('railwayFileUpload').style.display = 'none';
             }
         }
         
