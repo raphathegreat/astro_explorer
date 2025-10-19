@@ -107,6 +107,11 @@ logger.info("🔧 MAIN LOGGER TEST - Application logging configured")
 ui_logger.info("🔧 UI LOGGER TEST - User interaction logging configured")
 data_logger.info("🔧 DATA LOGGER TEST - Data processing logging configured")
 
+# Hello world test to confirm updated code is running
+print("🚀 HELLO WORLD - UPDATED CODE IS RUNNING!")
+logger.info("🚀 HELLO WORLD - UPDATED CODE IS RUNNING!")
+data_logger.info("🚀 HELLO WORLD - UPDATED CODE IS RUNNING!")
+
 # Log application startup
 logger.info("🚀 APPLICATION STARTED - Log files cleared and ready for new session")
 ui_logger.info("🚀 NEW SESSION STARTED - User interaction logging ready")
@@ -116,6 +121,7 @@ print("🔧 LOGGING SYSTEM INITIALIZED - Log files cleared and ready for new ses
 
 # Global variables to store processed data
 processed_matches = []  # This will store the ORIGINAL data (never overwritten)
+current_filtered_matches = []  # This will store the CURRENT filtered data for display
 current_filters = {}
 processing_status = {'progress': 0, 'current_pair': 0, 'total_pairs': 0, 'status': 'idle'}
 cache_cleared_by_user = False  # Flag to prevent auto-loading after user clears cache
@@ -673,7 +679,6 @@ def load_v2_cache(cache_key):
     except Exception as e:
         print(f"❌ Error loading cache: {e}")
         return None
-
 
 # Alias functions for test compatibility
 def save_cache(cache_key, data):
@@ -1492,7 +1497,7 @@ def process_data(photos_dir, pair_percentile=10,  # Now represents minimum match
 
 def apply_filters_to_raw_data(enable_percentile=False, pair_percentile=10,  # Now represents minimum matches, not percentile
                              enable_std_dev=False, std_dev_multiplier=2.0,
-                             enable_keypoint_percentile=False, keypoint_percentile=5,
+                             enable_keypoint_percentile=False, keypoint_percentile_bottom=5, keypoint_percentile_top=5,
                              enable_sequence=False, start_pair=1, end_pair=41,
                              enable_cloudiness=False, include_partly_cloudy=True, include_mostly_cloudy=True,
                              enable_gps_consistency=False, gps_tolerance_constant=0.783, filter_order=None):
@@ -1577,14 +1582,14 @@ def apply_filters_to_raw_data(enable_percentile=False, pair_percentile=10,  # No
         elif filter_type == 'gps_consistency' and not enable_gps_consistency:
             print(f"Debug: Step {step} - GPS consistency filter DISABLED - skipping filter")
         elif filter_type == 'keypoint_percentile' and enable_keypoint_percentile and len(filtered_keypoints) > 0:
-            # Apply keypoint percentile filtering (remove bottom and top X% by speed)
+            # Apply keypoint percentile filtering (remove bottom X% and top Y% by speed)
             speeds = [kp['speed'] for kp in filtered_keypoints]
             
-            # Calculate thresholds for both bottom and top percentiles
-            bottom_threshold = np.percentile(speeds, keypoint_percentile)
-            top_threshold = np.percentile(speeds, 100 - keypoint_percentile)
+            # Calculate thresholds for bottom and top percentiles separately
+            bottom_threshold = np.percentile(speeds, keypoint_percentile_bottom)
+            top_threshold = np.percentile(speeds, 100 - keypoint_percentile_top)
             
-            print(f"Debug: Step {step} - Keypoint percentile filter - removing bottom {keypoint_percentile}% and top {keypoint_percentile}%")
+            print(f"Debug: Step {step} - Keypoint percentile filter - removing bottom {keypoint_percentile_bottom}% and top {keypoint_percentile_top}%")
             print(f"Debug: Step {step} - Bottom threshold: {bottom_threshold:.3f} km/s, Top threshold: {top_threshold:.3f} km/s")
             print(f"Debug: Step {step} - Before keypoint filtering: {len(filtered_keypoints)} keypoints")
             
@@ -2228,21 +2233,27 @@ def process_range():
 @app.route('/api/statistics')
 def get_statistics():
     """Get statistics for current matches"""
-    global processed_matches, current_filters
+    global processed_matches, current_filters, current_filtered_matches
+    
+    # Determine which data to use: filtered data if available, otherwise original data
+    data_to_use = current_filtered_matches if current_filtered_matches else processed_matches
+    data_source = "filtered" if current_filtered_matches else "original"
     
     # Log user interaction
     ui_logger.info("📊 STATISTICS API CALL - User requested Section 3 statistics")
-    ui_logger.info(f"📊 Current processed_matches count: {len(processed_matches) if processed_matches else 0}")
+    ui_logger.info(f"📊 Using {data_source} data: {len(data_to_use) if data_to_use else 0} matches")
     ui_logger.info(f"📊 Current filters applied: {json.dumps(current_filters, indent=2)}")
     
     # Log data processing details
     data_logger.info("📊 SECTION 3 STATISTICS CALCULATION STARTED")
-    data_logger.info(f"📊 Input data: {len(processed_matches) if processed_matches else 0} matches")
+    data_logger.info(f"📊 Using {data_source} data: {len(data_to_use) if data_to_use else 0} matches")
+    data_logger.info(f"📊 Original data: {len(processed_matches) if processed_matches else 0} matches")
+    data_logger.info(f"📊 Filtered data: {len(current_filtered_matches) if current_filtered_matches else 0} matches")
     data_logger.info(f"📊 Filters applied: {json.dumps(current_filters, indent=2)}")
     
-    print(f"🔍 Statistics endpoint called - processed_matches: {len(processed_matches) if processed_matches else 0}")
+    print(f"🔍 Statistics endpoint called - using {data_source} data: {len(data_to_use) if data_to_use else 0} matches")
     
-    if not processed_matches:
+    if not data_to_use:
         logger.info("📊 No processed matches - returning default values")
         print("🔍 No processed matches - returning default values")
         # Return empty statistics instead of error to prevent frontend crashes
@@ -2259,28 +2270,9 @@ def get_statistics():
         logger.info(f"📊 Returning default statistics: {default_stats}")
         return jsonify(default_stats)
     
-    # Apply current filters to get the same data as Section 5 (histogram)
-    if not current_filters:
-        # No filters applied - use raw data
-        filtered_matches = processed_matches
-        print(f"🔍 No filters applied - using raw data: {len(filtered_matches)} matches")
-    else:
-        # Apply current filters to match Section 5
-        filtered_matches = apply_match_filters(processed_matches, current_filters)
-        print(f"🔍 Filters applied - filtered data: {len(filtered_matches)} matches")
-    
-    if not filtered_matches:
-        print("🔍 No filtered matches - returning default values")
-        # Return empty statistics if no data after filtering
-        return jsonify({
-            'mean': 0,
-            'median': 0,
-            'mode': 0,
-            'count': 0,
-            'std_dev': 0,
-            'match_mode': 0,
-            'match_count': 0
-        })
+    # Use the appropriate data source (already determined above)
+    filtered_matches = data_to_use
+    print(f"🔍 Using {data_source} data for statistics: {len(filtered_matches)} matches")
     
     # Calculate pair speeds (average speed per pair) and individual match speeds
     pair_speeds = []
@@ -2490,8 +2482,10 @@ def apply_filters():
         
         # Apply filters to processed_matches (ORIGINAL DATA - never overwritten)
         data_logger.info(f"🔄 PRESERVING ORIGINAL DATA: {len(processed_matches)} matches (never overwritten)")
+        data_logger.info(f"🔄 ABOUT TO APPLY FILTERS: current_filters = {current_filters}")
         filtered_matches = apply_match_filters(processed_matches, current_filters)
         data_logger.info(f"🔄 FILTERED DATA: {len(filtered_matches)} matches (temporary, not stored)")
+        data_logger.info(f"🔄 FILTERING COMPLETE: {len(filtered_matches)}/{len(processed_matches)} matches remaining")
         
         # Apply custom GSD if enabled
         if current_filters.get('enable_custom_gsd', False):
@@ -2514,9 +2508,22 @@ def apply_filters():
             
             logger.info(f"🛰️ GSD RECALCULATION COMPLETE: {gsd_recalculated_count} matches recalculated")
         
-        # CRITICAL FIX: Never overwrite processed_matches (original data)
-        # The original data must be preserved for consistent filtering
-        # filtered_matches contains the filtered data for this specific filter application
+        # Store filtered results separately - NEVER overwrite original data
+        # The original processed_matches must always remain unchanged
+        data_logger.info(f"🔄 PRESERVING ORIGINAL DATA: processed_matches count = {len(processed_matches)} (NEVER CHANGED)")
+        data_logger.info(f"🔄 FILTERED DATA READY: filtered_matches count = {len(filtered_matches)} (for display only)")
+        
+        # Store current filtered data for API endpoints to use
+        # This will be used by /api/statistics and /api/plot-data
+        global current_filtered_matches
+        
+        # If no filters are applied, clear the filtered data to use original data
+        if not current_filters or all(not v for v in current_filters.values() if isinstance(v, bool)):
+            current_filtered_matches = []
+            data_logger.info(f"🔄 NO FILTERS APPLIED: cleared current_filtered_matches (will use original data)")
+        else:
+            current_filtered_matches = filtered_matches
+            data_logger.info(f"🔄 FILTERS APPLIED: stored current_filtered_matches = {len(current_filtered_matches)} matches")
         
         # Calculate statistics for filtered matches
         # Calculate pair speeds (average speed per pair) and collect all match speeds
@@ -2594,33 +2601,39 @@ def get_processing_status():
 @app.route('/api/plot-data')
 def get_plot_data():
     """Get plot data for visualization - same as original dashboard"""
-    global processed_matches, current_filters
+    global processed_matches, current_filters, current_filtered_matches
+    
+    # Determine which data to use: filtered data if available, otherwise original data
+    data_to_use = current_filtered_matches if current_filtered_matches else processed_matches
+    data_source = "filtered" if current_filtered_matches else "original"
     
     # Log user interaction
     ui_logger.info("📈 PLOT DATA API CALL - User requested Section 5 & 6 graph data")
-    ui_logger.info(f"📈 Current processed_matches count: {len(processed_matches) if processed_matches else 0}")
+    ui_logger.info(f"📈 Using {data_source} data: {len(data_to_use) if data_to_use else 0} matches")
     ui_logger.info(f"📈 Current filters applied: {json.dumps(current_filters, indent=2)}")
     
     # Log data processing
     data_logger.info("📈 SECTION 5 & 6 GRAPH DATA GENERATION STARTED")
-    data_logger.info(f"📈 Input data: {len(processed_matches) if processed_matches else 0} matches")
+    data_logger.info(f"📈 Using {data_source} data: {len(data_to_use) if data_to_use else 0} matches")
+    data_logger.info(f"📈 Original data: {len(processed_matches) if processed_matches else 0} matches")
+    data_logger.info(f"📈 Filtered data: {len(current_filtered_matches) if current_filtered_matches else 0} matches")
     data_logger.info(f"📈 Filters applied: {json.dumps(current_filters, indent=2)}")
     
-    logger.info(f"📈 PLOT DATA API CALL - processed_matches: {len(processed_matches) if processed_matches else 0}")
+    logger.info(f"📈 PLOT DATA API CALL - using {data_source} data: {len(data_to_use) if data_to_use else 0}")
     logger.info(f"📈 Current filters: {current_filters}")
     
-    print(f"🔍 Plot data request - processed_matches: {len(processed_matches) if processed_matches else 0}")
+    print(f"🔍 Plot data request - using {data_source} data: {len(data_to_use) if data_to_use else 0}")
     print(f"🔍 Current filters: {current_filters}")
     if current_filters.get('enable_ml_classification', False):
         print(f"🔍 ML classification enabled: True")
     
-    if not processed_matches:
+    if not data_to_use:
         print("❌ No processed matches available")
         return jsonify({'error': 'No data processed'})
     
-    # Debug: Check the structure of processed_matches
-    if processed_matches:
-        sample_match = processed_matches[0]
+    # Debug: Check the structure of data_to_use
+    if data_to_use:
+        sample_match = data_to_use[0]
         print(f"🔍 Sample match structure: {list(sample_match.keys())}")
         print(f"🔍 Sample match speed: {sample_match.get('speed', 'NO SPEED')}")
         print(f"🔍 Sample match pair_index: {sample_match.get('pair_index', 'NO PAIR_INDEX')}")
@@ -2629,27 +2642,20 @@ def get_plot_data():
         
         # Count ML classifications (only if ML is enabled)
         if current_filters.get('enable_ml_classification', False):
-            ml_classifications = [m.get('ml_classification') for m in processed_matches if m.get('ml_classification') is not None]
-            print(f"🔍 ML classifications found: {len(ml_classifications)} out of {len(processed_matches)} matches")
+            ml_classifications = [m.get('ml_classification') for m in data_to_use if m.get('ml_classification') is not None]
+            print(f"🔍 ML classifications found: {len(ml_classifications)} out of {len(data_to_use)} matches")
             if ml_classifications:
                 from collections import Counter
                 ml_counts = Counter(ml_classifications)
                 print(f"🔍 ML classification counts: {dict(ml_counts)}")
     
-    # If current_filters is empty (fresh state), don't apply any filters
-    # This ensures that when loading from cache, we always show raw data initially
-    if not current_filters:
-        print("🔄 No filters applied - showing raw data (fresh state)")
-        filtered_matches = processed_matches
-    else:
-        # Apply current filters to get filtered data
-        print(f"🔍 Applying filters: {current_filters}")
-        filtered_matches = apply_match_filters(processed_matches, current_filters)
-    print(f"🔍 Filtered matches: {len(filtered_matches) if filtered_matches else 0}")
+    # Use the appropriate data source (already determined above)
+    filtered_matches = data_to_use
+    print(f"🔍 Using {data_source} data for plot generation: {len(filtered_matches) if filtered_matches else 0}")
     
     if not filtered_matches:
-        print("❌ No data after filtering")
-        return jsonify({'error': 'No data after filtering'})
+        print("❌ No data available for plotting")
+        return jsonify({'error': 'No data available for plotting'})
     
     # Extract speeds
     speeds = [match['speed'] for match in filtered_matches]
@@ -3083,14 +3089,15 @@ def apply_match_filters(matches, filters):
     """Apply filters to matches - same filters as original dashboard (excluding GPS)"""
     filtered = matches.copy()
     
-    # Keypoint percentile filter (remove bottom and top X% by speed)
+    # Keypoint percentile filter (remove bottom X% and top Y% by speed)
     if filters.get('enable_keypoint_percentile', False) and len(filtered) > 0:
-        keypoint_percentile = filters.get('keypoint_percentile', 5)
+        keypoint_percentile_bottom = filters.get('keypoint_percentile_bottom', 5)
+        keypoint_percentile_top = filters.get('keypoint_percentile_top', 5)
         speeds = [m['speed'] for m in filtered]
         
-        # Calculate thresholds for both bottom and top percentiles
-        bottom_threshold = np.percentile(speeds, keypoint_percentile)
-        top_threshold = np.percentile(speeds, 100 - keypoint_percentile)
+        # Calculate thresholds for bottom and top percentiles separately
+        bottom_threshold = np.percentile(speeds, keypoint_percentile_bottom)
+        top_threshold = np.percentile(speeds, 100 - keypoint_percentile_top)
         
         # Keep only matches within the percentile range
         filtered = [m for m in filtered if bottom_threshold <= m['speed'] <= top_threshold]
@@ -3338,7 +3345,8 @@ def process_folder():
     cloudy_brightness_max = float(data.get('cloudy_brightness_max', 60))
     cloudy_contrast_max = float(data.get('cloudy_contrast_max', 15))
     std_dev_multiplier = float(data.get('std_dev_multiplier', 2.0))
-    keypoint_percentile = float(data.get('keypoint_percentile', 5))
+    keypoint_percentile_bottom = float(data.get('keypoint_percentile_bottom', 5))
+    keypoint_percentile_top = float(data.get('keypoint_percentile_top', 5))
     match_quality_threshold = float(data.get('match_quality_threshold', 30))
     start_pair = int(data.get('start_pair', 1))
     end_pair = int(data.get('end_pair', 41))
