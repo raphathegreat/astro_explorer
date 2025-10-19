@@ -2953,9 +2953,9 @@
                 
                 // Use XMLHttpRequest for real upload progress tracking
                 const response = await uploadWithProgress('/api/upload-folder', formData, (progress) => {
-                    // Real progress: 85% to 95% based on actual upload progress
-                    const realProgress = 85 + (progress * 0.1); // 85% to 95%
-                    updateUploadProgress(realProgress, 'Uploading to server...', `Uploading: ${Math.round(progress)}% complete`);
+                    // Show real upload progress: 80% to 95% based on actual upload progress
+                    const realProgress = 80 + (progress * 0.15); // 80% to 95%
+                    updateUploadProgress(realProgress, 'Uploading to server...', `Uploading ${imageFiles.length} files: ${Math.round(progress)}% complete`);
                 });
                 
                 updateUploadProgress(95, 'Processing upload...', 'Server is processing your files');
@@ -3010,9 +3010,9 @@
                 
                 // Use XMLHttpRequest for real upload progress tracking
                 const response = await uploadWithProgress('/api/upload-folder', formData, (progress) => {
-                    // Real progress: 75% to 90% based on actual upload progress
-                    const realProgress = 75 + (progress * 0.15); // 75% to 90%
-                    updateUploadProgress(realProgress, 'Uploading to server...', `Uploading: ${Math.round(progress)}% complete`);
+                    // Show real upload progress: 70% to 90% based on actual upload progress
+                    const realProgress = 70 + (progress * 0.20); // 70% to 90%
+                    updateUploadProgress(realProgress, 'Uploading to server...', `Uploading ${files.length} files: ${Math.round(progress)}% complete`);
                 });
                 
                 updateUploadProgress(90, 'Processing upload...', 'Server is processing your files');
