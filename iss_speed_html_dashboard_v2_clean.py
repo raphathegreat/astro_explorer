@@ -42,8 +42,11 @@ def get_app_version():
     """Get application version - tries multiple sources for automatic versioning"""
     base_version = "2.1.0"
     
+    # Check if running on Railway
+    is_railway = os.environ.get('RAILWAY_ENVIRONMENT') is not None or os.environ.get('RAILWAY_SERVICE_NAME') is not None
+    
     # Priority 1: Check for version in environment variable (set during Railway build)
-    env_version = os.environ.get('APP_VERSION') or os.environ.get('RAILWAY_RELEASE_VERSION')
+    env_version = os.environ.get('APP_VERSION') or os.environ.get('RAILWAY_RELEASE_VERSION') or os.environ.get('RAILWAY_RELEASE_ID')
     if env_version:
         return f"{base_version} (build: {env_version})"
     
@@ -60,16 +63,27 @@ def get_app_version():
         pass
     
     # Priority 3: Use deployment timestamp (for Railway)
-    deploy_time = os.environ.get('RAILWAY_DEPLOYMENT_TIMESTAMP')
+    deploy_time = os.environ.get('RAILWAY_DEPLOYMENT_TIMESTAMP') or os.environ.get('RAILWAY_RELEASE_CREATED_AT')
     if deploy_time:
         from datetime import datetime
         try:
             dt = datetime.fromisoformat(deploy_time.replace('Z', '+00:00'))
             return f"{base_version} (deployed: {dt.strftime('%Y-%m-%d %H:%M')})"
         except:
-            return f"{base_version} (deployed: {deploy_time[:10]})"
+            try:
+                # Try parsing as unix timestamp
+                dt = datetime.fromtimestamp(float(deploy_time))
+                return f"{base_version} (deployed: {dt.strftime('%Y-%m-%d %H:%M')})"
+            except:
+                return f"{base_version} (deployed: {deploy_time[:10]})"
     
-    # Priority 4: Fallback to base version
+    # Priority 4: For Railway, use current timestamp as fallback
+    if is_railway:
+        from datetime import datetime
+        now = datetime.now()
+        return f"{base_version} (deployed: {now.strftime('%Y-%m-%d %H:%M')})"
+    
+    # Priority 5: Fallback to base version (should only happen locally if git fails)
     return base_version
 
 APP_VERSION = get_app_version()
