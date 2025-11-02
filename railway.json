@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-        "startCommand": "/opt/venv/bin/python iss_speed_html_dashboard_v2_clean.py",
+    "startCommand": "/opt/venv/bin/gunicorn iss_speed_html_dashboard_v2_clean:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120 --access-logfile - --error-logfile -",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",

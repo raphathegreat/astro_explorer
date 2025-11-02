@@ -15,12 +15,29 @@ import matplotlib.pyplot as plt
 from flask import Flask, render_template, request, jsonify, send_file
 import logging
 import threading
-try:
-    import tensorflow as tf
-    TENSORFLOW_AVAILABLE = True
-except ImportError:
-    TENSORFLOW_AVAILABLE = False
-    print("⚠️ TensorFlow not available - ML classification will be disabled")
+# Lazy import TensorFlow to avoid blocking startup
+TENSORFLOW_AVAILABLE = None
+_tf_module = None
+
+def _check_tensorflow():
+    """Lazy check for TensorFlow availability"""
+    global TENSORFLOW_AVAILABLE, _tf_module
+    if TENSORFLOW_AVAILABLE is None:
+        try:
+            import tensorflow as tf
+            _tf_module = tf
+            TENSORFLOW_AVAILABLE = True
+        except ImportError:
+            TENSORFLOW_AVAILABLE = False
+            print("⚠️ TensorFlow not available - ML classification will be disabled")
+    return TENSORFLOW_AVAILABLE
+
+# For backward compatibility, expose tf when needed
+def get_tf():
+    """Get TensorFlow module (lazy loaded)"""
+    if _check_tensorflow():
+        return _tf_module
+    return None
 
 try:
     from PIL import Image as PILImage
@@ -208,8 +225,14 @@ def load_ml_model():
     """Load the TensorFlow Lite ML model - tries EdgeTPU model first (if pycoral available), then fallback to regular model"""
     global ml_interpreter, ml_labels, ml_model_loaded
     
-    if not TENSORFLOW_AVAILABLE or not PIL_AVAILABLE:
+    # Lazy load TensorFlow
+    if not _check_tensorflow() or not PIL_AVAILABLE:
         print("⚠️ Required dependencies not available for ML classification")
+        ml_model_loaded = False
+        return False
+    
+    tf = get_tf()  # Get TensorFlow module
+    if tf is None:
         ml_model_loaded = False
         return False
     
@@ -240,6 +263,7 @@ def load_ml_model():
                     delegates = None
                     print("ℹ️ No EdgeTPU device found, will use CPU")
                 
+                tf = get_tf()  # Get TensorFlow module
                 ml_interpreter = tf.lite.Interpreter(
                     model_path=edgetpu_model_path,
                     experimental_delegates=delegates if delegates else None
@@ -270,6 +294,7 @@ def load_ml_model():
             # Try EdgeTPU model without pycoral (will likely fail but worth trying)
             try:
                 print("🔄 Attempting to load EdgeTPU model without pycoral (may not work)...")
+                tf = get_tf()  # Get TensorFlow module
                 ml_interpreter = tf.lite.Interpreter(model_path=edgetpu_model_path)
                 ml_interpreter.allocate_tensors()
                 
@@ -315,6 +340,7 @@ def load_ml_model():
         
         print("🔄 Loading regular TensorFlow Lite model...")
         # Load model
+        tf = get_tf()  # Get TensorFlow module
         ml_interpreter = tf.lite.Interpreter(model_path=model_path)
         ml_interpreter.allocate_tensors()
         
@@ -366,7 +392,8 @@ def classify_image_with_ml(image_path):
     """Classify image using ML model with timeout protection"""
     global ml_interpreter, ml_labels, ml_model_loaded
 
-    if not TENSORFLOW_AVAILABLE or not PIL_AVAILABLE:
+    # Lazy load TensorFlow
+    if not _check_tensorflow() or not PIL_AVAILABLE:
         return None, 0.0
 
     # Load model if not already loaded
@@ -3728,7 +3755,7 @@ def process_folder():
             print(f"🔄 Starting background processing for {photos_dir}")
             result = process_data(photos_dir, pair_percentile, 
                         clear_brightness_min, clear_contrast_min, cloudy_brightness_max, cloudy_contrast_max,
-                        std_dev_multiplier, keypoint_percentile, 
+                        std_dev_multiplier, keypoint_percentile_bottom, 
                         match_quality_threshold, start_pair, end_pair)
             if result:
                 print(f"✅ Background processing completed successfully for {photos_dir}")
