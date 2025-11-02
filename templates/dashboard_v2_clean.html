@@ -1573,16 +1573,143 @@
                 height: 250px;
             }
         }
+
+        /* Feedback Modal Styles */
+        .feedback-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow: auto;
+        }
+
+        .feedback-modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 30px;
+            border: 1px solid #888;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .feedback-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #007bff;
+        }
+
+        .feedback-modal-header h2 {
+            margin: 0;
+            color: #333;
+        }
+
+        .close-feedback-modal {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 20px;
+        }
+
+        .close-feedback-modal:hover {
+            color: #000;
+        }
+
+        .feedback-form-group {
+            margin-bottom: 20px;
+        }
+
+        .feedback-form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .feedback-form-group input,
+        .feedback-form-group textarea,
+        .feedback-form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+
+        .feedback-form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .feedback-form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #6c757d;
+            font-size: 12px;
+        }
+
+        .feedback-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        .feedback-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .feedback-btn-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+        }
+
+        .feedback-btn-primary:hover {
+            background: linear-gradient(135deg, #0056b3, #004085);
+        }
+
+        .feedback-btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .feedback-btn-secondary:hover {
+            background: #5a6268;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>ISS Speed Analysis Dashboard v2</h1>
-            <p>Advanced Image Processing and Speed Calculation</p>
-            <p id="versionDisplay" style="font-size: 0.85rem; opacity: 0.9; margin-top: 8px;">
-                Version: <span id="versionNumber">Loading...</span>
-            </p>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <div style="flex: 1;">
+                    <h1>ISS Speed Analysis Dashboard v2</h1>
+                    <p>Advanced Image Processing and Speed Calculation</p>
+                    <p id="versionDisplay" style="font-size: 0.85rem; opacity: 0.9; margin-top: 8px;">
+                        Version: <span id="versionNumber">Loading...</span>
+                    </p>
+                </div>
+                <button onclick="openFeedbackModal()" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; margin-top: 10px; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                    🐛 Report Bug / 💡 Request Feature
+                </button>
+            </div>
         </div>
 
 
@@ -4614,13 +4741,133 @@
             }
         }
         
-        // Close modal when clicking outside
+        // Close modals when clicking outside
         window.onclick = function(event) {
-            const modal = document.getElementById('imageModal');
-            if (event.target === modal) {
+            const imageModal = document.getElementById('imageModal');
+            const feedbackModal = document.getElementById('feedbackModal');
+            
+            if (event.target === imageModal) {
                 closeModal();
             }
+            if (event.target === feedbackModal) {
+                closeFeedbackModal();
+            }
+        }
+
+        // Feedback Modal Functions
+        function openFeedbackModal() {
+            const modal = document.getElementById('feedbackModal');
+            if (modal) {
+                modal.style.display = 'block';
+                // Reset form
+                document.getElementById('feedbackType').value = 'bug';
+                document.getElementById('feedbackTitle').value = '';
+                document.getElementById('feedbackDescription').value = '';
+            }
+        }
+
+        function closeFeedbackModal() {
+            const modal = document.getElementById('feedbackModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function submitFeedback() {
+            const type = document.getElementById('feedbackType').value;
+            const title = document.getElementById('feedbackTitle').value.trim();
+            const description = document.getElementById('feedbackDescription').value.trim();
+            
+            if (!title) {
+                alert('Please enter a title for your ' + (type === 'bug' ? 'bug report' : 'feature request'));
+                return;
+            }
+            
+            if (!description) {
+                alert('Please provide a description');
+                return;
+            }
+
+            // Get version info
+            const versionElement = document.getElementById('versionNumber');
+            const version = versionElement ? versionElement.textContent : 'Unknown';
+            
+            // Get browser info
+            const userAgent = navigator.userAgent;
+            const screenResolution = `${screen.width}x${screen.height}`;
+            const url = window.location.href;
+            
+            // Create GitHub issue URL with pre-filled data
+            const githubRepo = 'raphathegreat/astro_explorer'; // Update if different
+            const issueLabel = type === 'bug' ? 'bug' : 'enhancement';
+            
+            // Build issue body with template
+            const issueBody = encodeURIComponent(`## ${type === 'bug' ? '🐛 Bug Report' : '💡 Feature Request'}
+
+### Description
+${description}
+
+### Environment Information
+- **App Version**: ${version}
+- **URL**: ${url}
+- **Browser**: ${userAgent}
+- **Screen Resolution**: ${screenResolution}
+- **Date**: ${new Date().toISOString()}
+
+### Additional Details
+(Please add any additional information that might help)
+
+---
+*This issue was created automatically from the AstroPi Explorer Dashboard*`);
+
+            const issueTitle = encodeURIComponent(title);
+            const githubUrl = `https://github.com/${githubRepo}/issues/new?labels=${issueLabel}&title=${issueTitle}&body=${issueBody}`;
+            
+            // Open GitHub issue page in new tab
+            window.open(githubUrl, '_blank');
+            
+            // Close modal and show confirmation
+            closeFeedbackModal();
+            alert(`✅ Opening GitHub to create your ${type === 'bug' ? 'bug report' : 'feature request'}!\n\nYou'll be redirected to GitHub where you can review and submit the issue.`);
         }
     </script>
+
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="feedback-modal">
+        <div class="feedback-modal-content">
+            <div class="feedback-modal-header">
+                <h2>🐛 Report Bug / 💡 Request Feature</h2>
+                <span class="close-feedback-modal" onclick="closeFeedbackModal()">&times;</span>
+            </div>
+            
+            <form onsubmit="event.preventDefault(); submitFeedback();">
+                <div class="feedback-form-group">
+                    <label for="feedbackType">Type *</label>
+                    <select id="feedbackType" required>
+                        <option value="bug">🐛 Bug Report</option>
+                        <option value="enhancement">💡 Feature Request</option>
+                    </select>
+                    <small>Select whether you're reporting a bug or requesting a new feature</small>
+                </div>
+                
+                <div class="feedback-form-group">
+                    <label for="feedbackTitle">Title *</label>
+                    <input type="text" id="feedbackTitle" placeholder="Brief description of the issue or feature" required>
+                    <small>Short, descriptive title for your bug report or feature request</small>
+                </div>
+                
+                <div class="feedback-form-group">
+                    <label for="feedbackDescription">Description *</label>
+                    <textarea id="feedbackDescription" placeholder="Describe the issue or feature in detail. Include steps to reproduce if it's a bug, or explain the use case if it's a feature request." required></textarea>
+                    <small>Provide as much detail as possible to help us understand your bug report or feature request</small>
+                </div>
+                
+                <div class="feedback-buttons">
+                    <button type="button" class="feedback-btn feedback-btn-secondary" onclick="closeFeedbackModal()">Cancel</button>
+                    <button type="submit" class="feedback-btn feedback-btn-primary">Create GitHub Issue</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
