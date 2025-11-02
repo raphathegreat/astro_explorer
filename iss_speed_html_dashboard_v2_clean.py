@@ -37,6 +37,43 @@ import json
 
 app = Flask(__name__)
 
+# Application version - automatically derived from git, environment variable, or deployment timestamp
+def get_app_version():
+    """Get application version - tries multiple sources for automatic versioning"""
+    base_version = "2.1.0"
+    
+    # Priority 1: Check for version in environment variable (set during Railway build)
+    env_version = os.environ.get('APP_VERSION') or os.environ.get('RAILWAY_RELEASE_VERSION')
+    if env_version:
+        return f"{base_version} (build: {env_version})"
+    
+    # Priority 2: Try git commit hash (works locally and if git available)
+    try:
+        import subprocess
+        git_hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'], 
+                                          stderr=subprocess.DEVNULL, timeout=2).decode('utf-8').strip()
+        git_date = subprocess.check_output(['git', 'log', '-1', '--format=%cd', '--date=short'], 
+                                          stderr=subprocess.DEVNULL, timeout=2).decode('utf-8').strip()
+        if git_hash and git_date:
+            return f"{base_version}-{git_hash} ({git_date})"
+    except Exception:
+        pass
+    
+    # Priority 3: Use deployment timestamp (for Railway)
+    deploy_time = os.environ.get('RAILWAY_DEPLOYMENT_TIMESTAMP')
+    if deploy_time:
+        from datetime import datetime
+        try:
+            dt = datetime.fromisoformat(deploy_time.replace('Z', '+00:00'))
+            return f"{base_version} (deployed: {dt.strftime('%Y-%m-%d %H:%M')})"
+        except:
+            return f"{base_version} (deployed: {deploy_time[:10]})"
+    
+    # Priority 4: Fallback to base version
+    return base_version
+
+APP_VERSION = get_app_version()
+
 # Detect environment (local vs Railway)
 def is_railway_deployment():
     """Detect if running on Railway or locally"""
@@ -2048,6 +2085,14 @@ def favicon():
         # Fallback if favicon doesn't exist
         return '', 204
 
+@app.route('/api/version')
+def get_version():
+    """Get application version"""
+    return jsonify({
+        "version": APP_VERSION,
+        "application": "AstroPi Explorer Dashboard"
+    })
+
 @app.route('/health')
 def health():
     """Simple health check endpoint for Railway"""
@@ -2056,6 +2101,7 @@ def health():
         return jsonify({
             "status": "healthy", 
             "message": "AstroPi Explorer Dashboard is running",
+            "version": APP_VERSION,
             "timestamp": datetime.now().isoformat()
         })
     except Exception as e:

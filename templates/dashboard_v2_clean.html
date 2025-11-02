@@ -1580,6 +1580,9 @@
         <div class="header">
             <h1>ISS Speed Analysis Dashboard v2</h1>
             <p>Advanced Image Processing and Speed Calculation</p>
+            <p id="versionDisplay" style="font-size: 0.85rem; opacity: 0.9; margin-top: 8px;">
+                Version: <span id="versionNumber">Loading...</span>
+            </p>
         </div>
 
 
@@ -2273,7 +2276,26 @@
         let selectedFolderHandle = null; // Store the selected folder handle
 
         // Load folders on page load
+        // Load and display application version
+        async function loadVersion() {
+            try {
+                const response = await fetch('/api/version');
+                const data = await response.json();
+                const versionElement = document.getElementById('versionNumber');
+                if (versionElement && data.version) {
+                    versionElement.textContent = data.version;
+                }
+            } catch (error) {
+                console.error('❌ Error loading version:', error);
+                const versionElement = document.getElementById('versionNumber');
+                if (versionElement) {
+                    versionElement.textContent = 'Unknown';
+                }
+            }
+        }
+
         window.onload = function() {
+            loadVersion(); // Load version first
             detectEnvironment();
             loadFolders();
             loadDeleteFolders();
