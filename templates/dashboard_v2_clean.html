@@ -1367,11 +1367,15 @@
                 flex-direction: column;
                 align-items: stretch;
                 gap: 8px;
+                width: 100%;
             }
             
             .control-group label {
                 font-weight: bold;
                 margin-bottom: 5px;
+                min-width: unset;
+                text-align: left;
+                width: 100%;
             }
             
             .control-group select,
@@ -1379,6 +1383,28 @@
                 padding: 12px;
                 font-size: 16px; /* Prevents zoom on iOS */
                 border-radius: 6px;
+                width: 100%;
+                min-width: unset; /* Remove min-width on mobile */
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+            
+            /* Ensure select dropdowns don't overflow on mobile */
+            #folderSelect,
+            #deleteFolderSelect {
+                width: 100%;
+                min-width: unset;
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            
+            /* Truncate long option text in dropdowns */
+            #folderSelect option,
+            #deleteFolderSelect option {
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
             
             .range-container {
@@ -1511,6 +1537,25 @@
             
             .control-row {
                 gap: 15px;
+                flex-wrap: wrap;
+            }
+            
+            .control-group {
+                flex: 1;
+                min-width: 200px;
+            }
+            
+            .control-group select {
+                width: 100%;
+                min-width: 200px;
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+            
+            #folderSelect,
+            #deleteFolderSelect {
+                width: 100%;
+                max-width: 100%;
             }
             
             .config-grid {
@@ -1558,6 +1603,33 @@
             
             .section-title {
                 font-size: 1.1rem;
+            }
+            
+            .control-group {
+                flex-direction: column;
+                align-items: stretch;
+                width: 100%;
+            }
+            
+            .control-group label {
+                min-width: unset;
+                text-align: left;
+                width: 100%;
+            }
+            
+            .control-group select,
+            .control-group input {
+                width: 100%;
+                min-width: unset;
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+            
+            #folderSelect,
+            #deleteFolderSelect {
+                width: 100%;
+                min-width: unset;
+                max-width: 100%;
             }
             
             .range-container {
@@ -1717,9 +1789,9 @@
         <div class="section">
             <div class="section-title">Section 1: Photo Selection</div>
             <div class="control-row">
-                <div class="control-group" style="flex: 1;">
+                <div class="control-group" style="flex: 1; min-width: 0;">
                     <label>Photo Folder:</label>
-                    <select id="folderSelect">
+                    <select id="folderSelect" style="width: 100%; box-sizing: border-box;">
                         <option value="">Select a folder...</option>
                     </select>
                 </div>
@@ -1738,10 +1810,10 @@
                     </div>
                 </div>
                 <!-- Delete uploaded folders subsection -->
-                <div class="control-group" style="flex: 1; margin-left: 20px;">
+                <div class="control-group" style="flex: 1; margin-left: 20px; min-width: 0;">
                     <label>Manage Uploaded Folders:</label>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <select id="deleteFolderSelect" style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <select id="deleteFolderSelect" style="flex: 1; min-width: 150px; box-sizing: border-box;">
                             <option value="">Select folder to delete...</option>
                         </select>
                         <button type="button" id="deleteFolderBtn" onclick="deleteSelectedFolder()" style="padding: 8px 16px; background: linear-gradient(135deg, #dc3545, #c82333); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" disabled>

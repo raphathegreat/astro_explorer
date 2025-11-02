@@ -8,5 +8,5 @@ exif>=1.2.0
 gunicorn>=20.1.0
 python-dotenv>=0.19.0
 # ML Model Dependencies (optional - code handles missing gracefully)
-tensorflow>=2.12.0  # Required for TensorFlow Lite models
-pycoral>=2.0  # Optional - only needed for EdgeTPU models on devices with Coral USB Accelerator (like AstroPi on ISS)
+tensorflow>=2.10.0,<2.12  # Required for TensorFlow Lite models (Python 3.9 compatible - last version 2.11.x)
+pycoral>=0.2.0  # Optional - only needed for EdgeTPU models on devices with Coral USB Accelerator (like AstroPi on ISS)
