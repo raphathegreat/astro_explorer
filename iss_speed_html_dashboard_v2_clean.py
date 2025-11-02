@@ -2115,7 +2115,7 @@ def health():
 @app.route('/api/process-range', methods=['POST'])
 def process_range():
     """Process a range of image pairs with selected algorithms"""
-    global processed_matches, processing_status
+    global processed_matches, processing_status, current_filtered_matches, current_filters
     
     try:
         # Log user interaction
@@ -2159,9 +2159,10 @@ def process_range():
             cached_data = load_v2_cache(cache_key)
             if cached_data:
                 processed_matches = cached_data
-                # Reset filters when loading from cache to ensure fresh state
+                # Reset filters and filtered data when loading from cache to ensure fresh state
                 current_filters = {}
-                print(f"🔄 Reset filters when loading from cache - current_filters: {current_filters}")
+                current_filtered_matches = []
+                print(f"🔄 Reset filters and cleared filtered data when loading from cache - current_filters: {current_filters}, current_filtered_matches cleared")
                 processing_status = {
                     'progress': 100,
                     'current_pair': len(processed_matches),
@@ -2203,6 +2204,10 @@ def process_range():
         global cache_cleared_by_user
         cache_cleared_by_user = False  # Reset flag when processing new data
         processed_matches = []
+        # Clear filtered data when processing new images to avoid showing stale data
+        current_filtered_matches = []
+        current_filters = {}
+        print(f"🔄 Cleared filtered data and filters for new image processing")
         
         for i in range(start_idx, end_idx):
             # Update progress
