@@ -3590,17 +3590,37 @@
                 const response = await fetch('/api/processing-status');
                 const status = await response.json();
                 
+                const progressFill = document.getElementById('progressFill');
+                const progressText = document.getElementById('progressText');
+                const progressContainer = document.getElementById('progressContainer');
+                
+                if (!progressFill || !progressText || !progressContainer) {
+                    console.warn('Progress bar elements not found');
+                    return;
+                }
+                
+                // Ensure container is visible
+                if (status.status === 'processing' || status.status === 'completed' || status.status === 'error') {
+                    progressContainer.style.display = 'block';
+                }
+                
                 if (status.status === 'processing') {
-                    const progress = Math.round(status.progress);
-                    document.getElementById('progressFill').style.width = progress + '%';
-                    document.getElementById('progressText').textContent = 
-                        `Processing pair ${status.current_pair} of ${status.total_pairs} (${progress}%)`;
+                    const progress = Math.round(status.progress || 0);
+                    progressFill.style.width = progress + '%';
+                    progressText.textContent = 
+                        `Processing pair ${status.current_pair || 0} of ${status.total_pairs || 0} (${progress}%)`;
+                    console.log(`📊 Progress update: ${progress}% - pair ${status.current_pair}/${status.total_pairs}`);
                 } else if (status.status === 'completed') {
-                    document.getElementById('progressFill').style.width = '100%';
-                    document.getElementById('progressText').textContent = 'Processing completed!';
+                    progressFill.style.width = '100%';
+                    progressText.textContent = 'Processing completed!';
+                    console.log('✅ Processing completed');
                 } else if (status.status === 'error') {
-                    document.getElementById('progressText').textContent = `Processing failed: ${status.error || 'Unknown error'}`;
+                    progressText.textContent = `Processing failed: ${status.error || 'Unknown error'}`;
+                    console.error('❌ Processing error:', status.error);
                     throw new Error(status.error || 'Processing failed');
+                } else if (status.status === 'idle') {
+                    // Still processing but status not updated yet
+                    console.log('⏳ Waiting for processing to start...');
                 }
             } catch (error) {
                 console.error('Error updating progress:', error);

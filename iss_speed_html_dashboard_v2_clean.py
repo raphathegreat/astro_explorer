@@ -2312,12 +2312,13 @@ def process_range():
         
         # Initialize processing status
         total_pairs = end_idx - start_idx
-        processing_status = {
+        processing_status.update({
             'progress': 0,
             'current_pair': 0,
             'total_pairs': total_pairs,
             'status': 'processing'
-        }
+        })
+        print(f"📊 Initialized processing status: {processing_status}")
         
         print(f"🔄 Processing {total_pairs} pairs with {algorithm} (FLANN: {use_flann}, RANSAC/Homography: {use_ransac_homography}, Contrast: {contrast_enhancement})")
         if use_ransac_homography:
@@ -2824,7 +2825,17 @@ def apply_filters():
 def get_processing_status():
     """Get current processing status for progress bar"""
     global processing_status
-    return jsonify(processing_status)
+    # Return a copy to avoid any thread safety issues
+    status_copy = {
+        'progress': processing_status.get('progress', 0),
+        'current_pair': processing_status.get('current_pair', 0),
+        'total_pairs': processing_status.get('total_pairs', 0),
+        'status': processing_status.get('status', 'idle')
+    }
+    # Include error if present
+    if 'error' in processing_status:
+        status_copy['error'] = processing_status['error']
+    return jsonify(status_copy)
 
 @app.route('/api/plot-data')
 def get_plot_data():
