@@ -205,7 +205,7 @@ ml_interpreter = None
 ml_labels = {}
 
 def load_ml_model():
-    """Load the TensorFlow Lite ML model"""
+    """Load the TensorFlow Lite ML model - tries EdgeTPU model first (if pycoral available), then fallback to regular model"""
     global ml_interpreter, ml_labels, ml_model_loaded
     
     if not TENSORFLOW_AVAILABLE or not PIL_AVAILABLE:
@@ -213,6 +213,97 @@ def load_ml_model():
         ml_model_loaded = False
         return False
     
+    # Check if pycoral (EdgeTPU runtime) is available
+    try:
+        import pycoral
+        EDGETPU_AVAILABLE = True
+    except ImportError:
+        EDGETPU_AVAILABLE = False
+    
+    # Try EdgeTPU model first (if available and pycoral is installed)
+    edgetpu_model_path = "model_edgetpu.tflite"
+    edgetpu_labels_path = "edgetpu_labels.txt"
+    
+    if os.path.exists(edgetpu_model_path) and os.path.exists(edgetpu_labels_path):
+        if EDGETPU_AVAILABLE:
+            try:
+                print("🔄 Attempting to load EdgeTPU model with pycoral...")
+                from pycoral.utils import edgetpu
+                from pycoral.utils import dataset
+                
+                # Use EdgeTPU delegate for hardware acceleration (if available)
+                # Falls back to CPU if no EdgeTPU device found
+                try:
+                    delegates = [edgetpu.load_edgetpu_delegate()]
+                    print("✅ EdgeTPU device found, using hardware acceleration")
+                except Exception:
+                    delegates = None
+                    print("ℹ️ No EdgeTPU device found, will use CPU")
+                
+                ml_interpreter = tf.lite.Interpreter(
+                    model_path=edgetpu_model_path,
+                    experimental_delegates=delegates if delegates else None
+                )
+                ml_interpreter.allocate_tensors()
+                
+                # Load labels
+                with open(edgetpu_labels_path, 'r') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            parts = line.split(' ', 1)
+                            if len(parts) == 2:
+                                class_id = int(parts[0])
+                                class_name = parts[1]
+                                ml_labels[class_id] = class_name
+                
+                print(f"✅ EdgeTPU ML model loaded successfully. Classes: {list(ml_labels.values())}")
+                ml_model_loaded = True
+                return True
+            except Exception as e:
+                print(f"⚠️ Failed to load EdgeTPU model with pycoral ({e})")
+                print("   Note: EdgeTPU models require EdgeTPU hardware or pycoral runtime")
+                print("   Trying fallback model...")
+                ml_interpreter = None
+                ml_labels = {}
+        else:
+            # Try EdgeTPU model without pycoral (will likely fail but worth trying)
+            try:
+                print("🔄 Attempting to load EdgeTPU model without pycoral (may not work)...")
+                ml_interpreter = tf.lite.Interpreter(model_path=edgetpu_model_path)
+                ml_interpreter.allocate_tensors()
+                
+                # Load labels
+                with open(edgetpu_labels_path, 'r') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            parts = line.split(' ', 1)
+                            if len(parts) == 2:
+                                class_id = int(parts[0])
+                                class_name = parts[1]
+                                ml_labels[class_id] = class_name
+                
+                print(f"✅ EdgeTPU ML model loaded (running on CPU). Classes: {list(ml_labels.values())}")
+                ml_model_loaded = True
+                return True
+            except Exception as e:
+                error_msg = str(e)
+                if "edgetpu-custom-op" in error_msg or "unresolved custom op" in error_msg.lower():
+                    print("❌ EdgeTPU model cannot run without EdgeTPU hardware or pycoral library")
+                    print("   EdgeTPU models contain custom operations that require:")
+                    print("   1. Physical EdgeTPU hardware (Coral USB Accelerator), OR")
+                    print("   2. pycoral library (pip install pycoral)")
+                    print("   Railway (cloud) does not have EdgeTPU hardware")
+                    print("   Solution: Export a regular TensorFlow Lite model from Teachable Machine")
+                    print("            (select 'TensorFlow Lite' not 'Edge TPU' when exporting)")
+                else:
+                    print(f"⚠️ Failed to load EdgeTPU model: {e}")
+                print("   Falling back to regular model...")
+                ml_interpreter = None
+                ml_labels = {}
+    
+    # Fallback to regular TensorFlow Lite model
     try:
         model_path = "model_unquant.tflite"
         labels_path = "labels.txt"
@@ -222,6 +313,7 @@ def load_ml_model():
             ml_model_loaded = False
             return False
         
+        print("🔄 Loading regular TensorFlow Lite model...")
         # Load model
         ml_interpreter = tf.lite.Interpreter(model_path=model_path)
         ml_interpreter.allocate_tensors()
@@ -237,7 +329,7 @@ def load_ml_model():
                         class_name = parts[1]
                         ml_labels[class_id] = class_name
         
-        print(f"✅ ML model loaded successfully. Classes: {list(ml_labels.values())}")
+        print(f"✅ Regular ML model loaded successfully. Classes: {list(ml_labels.values())}")
         ml_model_loaded = True
         return True
         
@@ -311,9 +403,21 @@ def classify_image_with_ml(image_path):
         # Get class with highest probability
         class_id = np.argmax(output_data[0])
         confidence = float(output_data[0][class_id])
-        class_name = ml_labels.get(class_id, f"Class_{class_id}")
+        class_name_raw = ml_labels.get(class_id, f"Class_{class_id}")
+        
+        # Normalize class name to handle different label formats (GOOD/Not_Good/etc.)
+        # Convert to standard format: "Good" or "Not_Good"
+        class_name_normalized = class_name_raw.upper().strip()
+        if class_name_normalized in ['GOOD', 'GOOD_']:
+            class_name = 'Good'
+        elif class_name_normalized in ['NOT_GOOD', 'NOT GOOD', 'BAD', 'NOTGOOD']:
+            class_name = 'Not_Good'
+        else:
+            # Unknown class - return as is but log warning
+            print(f"⚠️ Unknown class name from model: {class_name_raw} (normalized: {class_name_normalized})")
+            class_name = class_name_raw
 
-        print(f"🤖 ML Classification for {os.path.basename(image_path)}: {class_name} (confidence: {confidence:.3f})")
+        print(f"🤖 ML Classification for {os.path.basename(image_path)}: {class_name} (confidence: {confidence:.3f}, raw: {class_name_raw})")
         return class_name, confidence
 
     except Exception as e:
@@ -3315,6 +3419,32 @@ def apply_match_filters(matches, filters):
         include_good = filters.get('include_good', True)
         include_not_good = filters.get('include_not_good', True)
         
+        # Check if model is loaded before starting
+        if not ml_model_loaded:
+            print("🔄 ML model not loaded, attempting to load now...")
+            load_ml_model()
+        
+        if ml_interpreter is None or not ml_labels:
+            print("⚠️ ML model not available - cannot classify images")
+            print(f"   ml_interpreter: {ml_interpreter is not None}")
+            print(f"   ml_labels: {len(ml_labels) if ml_labels else 0} classes")
+            print("")
+            print("📋 Troubleshooting ML model loading:")
+            if os.path.exists("model_edgetpu.tflite"):
+                print("   • EdgeTPU model found but requires 'pycoral' library")
+                print("   • Option 1: Install pycoral: pip install pycoral")
+                print("   • Option 2: Export a regular TensorFlow Lite model from Teachable Machine")
+                print("              (not EdgeTPU) and save as 'model_unquant.tflite'")
+            elif os.path.exists("model_unquant.tflite"):
+                print("   • Regular model found but failed to load - check error messages above")
+            else:
+                print("   • No model files found!")
+                print("   • Please add 'model_unquant.tflite' and 'labels.txt' to the project directory")
+            print("")
+            return filtered  # Return original filtered data if ML model unavailable
+        else:
+            print(f"✅ ML model ready - interpreter available, {len(ml_labels)} classes: {list(ml_labels.values())}")
+        
         print(f"🔄 Running ML classification on {len(filtered)} filtered matches...")
         ml_filtered = []
         
@@ -3351,19 +3481,45 @@ def apply_match_filters(matches, filters):
                         m['ml_confidence2'] = ml_conf2
 
                         # Determine pair-level ML classification
+                        # Debug logging
+                        if i < 3:  # Log first 3 matches for debugging
+                            print(f"🔍 Debug ML classification for match {i+1}:")
+                            print(f"   Image1: {os.path.basename(image1_path)} → {ml_class1} (conf: {ml_conf1:.3f})")
+                            print(f"   Image2: {os.path.basename(image2_path)} → {ml_class2} (conf: {ml_conf2:.3f})")
+                        
                         if ml_class1 == ml_class2 and ml_class1 is not None:
                             m['ml_classification'] = ml_class1
                             m['ml_confidence'] = (ml_conf1 + ml_conf2) / 2
+                            if i < 3:
+                                print(f"   → Pair classification: {ml_class1} (both agree)")
                         elif ml_class1 is not None and ml_class2 is not None:
+                            # Images have different classifications - use higher confidence
                             if ml_conf1 >= ml_conf2:
                                 m['ml_classification'] = ml_class1
                                 m['ml_confidence'] = ml_conf1
                             else:
                                 m['ml_classification'] = ml_class2
                                 m['ml_confidence'] = ml_conf2
+                            if i < 3:
+                                print(f"   → Pair classification: {m['ml_classification']} (using higher confidence)")
+                        elif ml_class1 is not None:
+                            # Only image1 classified - use it
+                            m['ml_classification'] = ml_class1
+                            m['ml_confidence'] = ml_conf1
+                            if i < 3:
+                                print(f"   → Pair classification: {ml_class1} (image1 only)")
+                        elif ml_class2 is not None:
+                            # Only image2 classified - use it
+                            m['ml_classification'] = ml_class2
+                            m['ml_confidence'] = ml_conf2
+                            if i < 3:
+                                print(f"   → Pair classification: {ml_class2} (image2 only)")
                         else:
+                            # Both returned None - classification failed
                             m['ml_classification'] = None
                             m['ml_confidence'] = 0.0
+                            if i < 3:
+                                print(f"   → Pair classification: None (both images failed)")
                     else:
                         m['ml_classification'] = None
                         m['ml_confidence'] = 0.0
