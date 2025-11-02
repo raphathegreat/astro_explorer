@@ -2016,7 +2016,7 @@
         <!-- Section 4: Data Filters -->
         <div class="section">
             <div class="section-title">Section 4: Data Filters</div>
-            <p class="section-description">Apply various filters to refine your analysis and focus on the most reliable data points. Use filters to remove outliers, focus on clear images, or apply machine learning classification.</p>
+            <p class="section-description">Apply various filters to refine your analysis and focus on the most reliable data points. Use filters to remove outliers or focus on clear images.</p>
             
             <!-- Filter Categories -->
             <div class="filter-categories">
@@ -2111,7 +2111,7 @@
                         <div class="filter-item">
                             <div class="filter-header">
                                 <label class="checkbox-label">
-                                    <input type="checkbox" id="enableCloudiness">
+                                    <input type="checkbox" id="enableCloudiness" checked>
                                     <span class="checkmark"></span>
                                     Cloudiness Filter
                                 </label>
@@ -2121,7 +2121,7 @@
                                     <strong>Example:</strong> Clear: brightness ≥120 Filters based on image brightness and contrast to remove cloudy images. Clear: high brightness (≥120) and contrast (≥55). Cloudy: low brightness (≤60) or contrast (≤40). contrast ≥55, Cloudy: brightness ≤60 or contrast ≤40<br>
                                     <strong>Purpose:</strong> Removes poor quality images (cloudy/overcast conditions that affect ISS visibility)</p>
                             </div>
-                            <div class="filter-params" id="cloudinessParams" style="display: none;">
+                            <div class="filter-params" id="cloudinessParams" style="display: flex;">
                                 <div class="settings-grid">
                                     <div class="setting-group">
                                         <h5>Clear Image Thresholds</h5>
@@ -2170,7 +2170,8 @@
                             </div>
                         </div>
                         
-                        <div class="filter-item">
+                        <!-- ML Classification Filter - Hidden from UI but code remains functional -->
+                        <div class="filter-item" style="display: none;">
                             <div class="filter-header">
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="enableMLClassification">
@@ -2306,10 +2307,11 @@
                             </div>
                         </div>
                         
-                        <div class="algorithm-item">
+                        <!-- GPS-based Method - Hidden from UI but code remains functional -->
+                        <div class="algorithm-item" style="display: none;">
                             <div class="algorithm-header">
                                 <label class="checkbox-label">
-                                    <input type="checkbox" id="compareGPS" checked>
+                                    <input type="checkbox" id="compareGPS">
                                     <span class="checkmark"></span>
                                     GPS-based Method
                                 </label>
@@ -2631,6 +2633,13 @@
 
             const enableCloudiness = document.getElementById('enableCloudiness');
             if (enableCloudiness) {
+                // Initialize cloudiness params display based on initial checkbox state (enabled by default)
+                const params = document.getElementById('cloudinessParams');
+                const params2 = document.getElementById('cloudinessParams2');
+                if (enableCloudiness.checked && params) {
+                    params.style.display = 'flex';
+                }
+                
                 enableCloudiness.addEventListener('change', function() {
                     const params = document.getElementById('cloudinessParams');
                     const params2 = document.getElementById('cloudinessParams2');
@@ -2655,9 +2664,15 @@
                 });
             }
             
+            // ML Classification Filter - Event listener kept for code compatibility but UI is hidden
             const enableMLClassification = document.getElementById('enableMLClassification');
             if (enableMLClassification) {
+                // Ensure ML checkbox is never checked (UI is hidden from users)
+                enableMLClassification.checked = false;
                 enableMLClassification.addEventListener('change', function() {
+                    // Prevent ML from being enabled (UI is hidden)
+                    this.checked = false;
+                    
                     const params = document.getElementById('mlClassificationParams');
                     const cloudinessCheckbox = document.getElementById('enableCloudiness');
                     const cloudinessParams = document.getElementById('cloudinessParams');
@@ -3449,13 +3464,32 @@
                     // This ensures we show raw data when loading from cache
                     console.log('🔄 Clearing frontend filter state before loading statistics');
                     
-                    // Load statistics
-                    await loadStatistics();
+                    // Enable refresh button first
                     document.getElementById('refreshBtn').disabled = false;
                     
-                    // Load plot data to show the graphs
-                    await updatePlots();
+                    // IMPORTANT: Auto-apply cloudiness filter IMMEDIATELY after processing
+                    // This ensures plot data shows classifications instead of "unknown"
+                    // Must happen BEFORE loadStatistics() to prevent unfiltered plot data
+                    const enableCloudiness = document.getElementById('enableCloudiness');
+                    if (enableCloudiness && enableCloudiness.checked) {
+                        console.log('🌤️ Cloudiness filter enabled - auto-applying filters immediately after processing...');
+                        
+                        // Load statistics first (without triggering plot update)
+                        await loadStatisticsWithoutPlots();
+                        
+                        // Now apply filters - this will populate current_filtered_matches on backend
+                        await refreshData();
+                        // refreshData() will update plots automatically, so we're done
+                        if (result.from_cache) {
+                            showMessage(`🚀 Loaded ${result.total_matches} matches from cache! Filters applied.`, 'success');
+                        } else {
+                            showMessage(`✅ Successfully processed ${result.pairs_processed} pairs with ${result.total_matches} total matches. Filters applied.`, 'success');
+                        }
+                        return; // Exit early since refreshData() already handled everything
+                    }
                     
+                    // If cloudiness not enabled, proceed with normal flow
+                    await loadStatistics();
                     if (result.from_cache) {
                         showMessage(`🚀 Loaded ${result.total_matches} matches from cache!`, 'success');
                     } else {
@@ -3494,39 +3528,45 @@
             }
         }
 
-        async function loadStatistics() {
+        async function loadStatisticsWithoutPlots() {
+            // Load statistics without triggering plot updates
             try {
                 const response = await fetch('/api/statistics');
-                
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-                
                 const stats = await response.json();
-                console.log('📊 Statistics received:', stats);
-                
-                // Log statistics update
-                logAction('STATISTICS_UPDATED', {
-                    statistics: stats,
-                    timestamp: new Date().toISOString()
-                });
-
                 if (stats && typeof stats === 'object') {
                     displayStatistics(stats);
-                    // Automatically show graphs when statistics are loaded
-                    // Note: updatePlots will call /api/plot-data which will show raw data if no filters are applied
-                    updatePlots(stats);
-                    // Update legend
-                    updateLegend();
-                    
-                    // Enable algorithm comparison button when data is loaded
+                    // Enable buttons
                     document.getElementById('runAlgorithmComparison').disabled = false;
-                    
-                    // Enable refresh button when data is loaded
                     const refreshBtn = document.getElementById('refreshBtn');
-                    if (refreshBtn) {
-                        refreshBtn.disabled = false;
-                        console.log('✅ Refresh button enabled - data is available for filtering');
+                    if (refreshBtn) refreshBtn.disabled = false;
+                }
+                return stats;
+            } catch (error) {
+                console.error('❌ Error loading statistics:', error);
+                throw error;
+            }
+        }
+
+        async function loadStatistics() {
+            try {
+                const stats = await loadStatisticsWithoutPlots();
+                
+                if (stats && typeof stats === 'object') {
+                    // Auto-apply cloudiness filter if enabled by default
+                    const enableCloudiness = document.getElementById('enableCloudiness');
+                    if (enableCloudiness && enableCloudiness.checked && stats.total_matches > 0) {
+                        console.log('🌤️ Cloudiness filter is enabled by default - auto-applying filters when loading statistics...');
+                        // Automatically apply filters (including cloudiness) to show proper classifications
+                        await refreshData();
+                    } else {
+                        // Automatically show graphs when statistics are loaded
+                        // Note: updatePlots will call /api/plot-data which will show raw data if no filters are applied
+                        updatePlots(stats);
+                        // Update legend
+                        updateLegend();
                     }
                 } else {
                     console.error('❌ Invalid statistics data:', stats);
@@ -3551,7 +3591,9 @@
                 if (document.getElementById('compareGithubCV').checked) {
                     algorithms.push('github_cv');
                 }
-                if (document.getElementById('compareGPS').checked) {
+                // GPS comparative test - hidden from UI but code remains functional
+                const compareGPS = document.getElementById('compareGPS');
+                if (compareGPS && compareGPS.checked) {
                     algorithms.push('gps');
                 }
                 if (document.getElementById('compareCchan083').checked) {
@@ -3865,7 +3907,8 @@
             const legendContainer = document.getElementById('legendContainer');
             const legendContent = document.getElementById('legendContent');
             const enableCloudiness = document.getElementById('enableCloudiness').checked;
-            const enableMLClassification = document.getElementById('enableMLClassification').checked;
+            // ML Classification Filter - Always false since UI is hidden
+            const enableMLClassification = false; // UI hidden, always disabled
             
             console.log('🔍 Updating legend - Cloudiness:', enableCloudiness, 'ML:', enableMLClassification);
             
@@ -3983,9 +4026,10 @@
             const cloudyBrightnessMax = parseFloat(document.getElementById('cloudyBrightnessMax').value);
             const cloudyContrastMax = parseFloat(document.getElementById('cloudyContrastMax').value);
             
-            const enableMLClassification = document.getElementById('enableMLClassification').checked;
-            const includeGood = document.getElementById('includeGood').checked;
-            const includeNotGood = document.getElementById('includeNotGood').checked;
+            // ML Classification Filter - Always false since UI is hidden
+            const enableMLClassification = false; // UI hidden, always disabled
+            const includeGood = document.getElementById('includeGood')?.checked || true;
+            const includeNotGood = document.getElementById('includeNotGood')?.checked || true;
             
             // GSD Configuration
             const enableCustomGSD = document.getElementById('enableCustomGSD').checked;
@@ -4059,9 +4103,11 @@
                         showMessage('Warning: No data matches your filter criteria. Graph will be empty.', 'error');
                     }
                     
-                    // Update plots automatically
+                    // Update plots automatically (filters already applied)
                     console.log('🔄 Updating plots with filtered data...');
+                    window.filtersAlreadyApplied = true; // Flag to skip auto-apply in updatePlots()
                     updatePlots(result.statistics);
+                    window.filtersAlreadyApplied = false;
                     
                     // Update legend
                     updateLegend();
@@ -4098,7 +4144,7 @@
             if (enableStdDev) enableStdDev.checked = false;
             
             const enableCloudiness = document.getElementById('enableCloudiness');
-            if (enableCloudiness) enableCloudiness.checked = false;  // Disable cloudiness by default
+            if (enableCloudiness) enableCloudiness.checked = true;  // Enable cloudiness by default
             
             const includePartlyCloudy = document.getElementById('includePartlyCloudy');
             if (includePartlyCloudy) includePartlyCloudy.checked = true;
@@ -4138,10 +4184,10 @@
             if (stdDevParam) stdDevParam.style.display = 'none';
             
             const cloudinessParams = document.getElementById('cloudinessParams');
-            if (cloudinessParams) cloudinessParams.style.display = 'none';  // Hide cloudiness params by default
+            if (cloudinessParams) cloudinessParams.style.display = 'flex';  // Show cloudiness params by default (cloudiness enabled)
             
             const cloudinessParams2 = document.getElementById('cloudinessParams2');
-            if (cloudinessParams2) cloudinessParams2.style.display = 'none';  // Hide cloudiness params by default
+            if (cloudinessParams2) cloudinessParams2.style.display = 'none';  // Hide second cloudiness params if it exists
             
             const mlParams = document.getElementById('mlClassificationParams');
             if (mlParams) mlParams.style.display = 'none';
@@ -4361,6 +4407,39 @@
         }
 
         async function updatePlots(stats) {
+            // If cloudiness filter is enabled by default, ensure filters are applied
+            // This ensures the graph shows proper classifications instead of "unknown"
+            // Skip if filters were already applied (from refreshData())
+            if (!window.filtersAlreadyApplied) {
+                const enableCloudiness = document.getElementById('enableCloudiness');
+                if (enableCloudiness && enableCloudiness.checked) {
+                    // Check if we have data to filter
+                    try {
+                        const statsCheck = await fetch('/api/statistics');
+                        if (statsCheck.ok) {
+                            const currentStats = await statsCheck.json();
+                            if (currentStats && currentStats.total_matches > 0) {
+                                // Check if refresh button is enabled (indicates filters can be applied)
+                                const refreshBtn = document.getElementById('refreshBtn');
+                                if (refreshBtn && !refreshBtn.disabled) {
+                                    // Apply filters automatically if cloudiness is enabled
+                                    // Use a flag to prevent infinite recursion
+                                    if (!window.filtersAutoApplied) {
+                                        window.filtersAutoApplied = true;
+                                        console.log('🌤️ Cloudiness enabled - auto-applying filters in updatePlots()...');
+                                        await refreshData();
+                                        window.filtersAutoApplied = false;
+                                        return; // refreshData() will call updatePlots() with filtered data
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.log('⚠️ Error in auto-apply check:', e);
+                    }
+                }
+            }
+            
             // Load plot data from backend
             try {
                 console.log('🔄 Loading plot data...');
