@@ -3532,6 +3532,12 @@
                 const result = await response.json();
 
                 if (result.success) {
+                    // Check if processing is happening in background
+                    if (result.status === 'processing') {
+                        // Wait for processing to complete by polling
+                        await waitForProcessingComplete(progressInterval);
+                    }
+                    
                     // Clear any frontend filter state before loading statistics
                     // This ensures we show raw data when loading from cache
                     console.log('🔄 Clearing frontend filter state before loading statistics');
@@ -3553,9 +3559,9 @@
                         await refreshData();
                         // refreshData() will update plots automatically, so we're done
                         if (result.from_cache) {
-                            showMessage(`🚀 Loaded ${result.total_matches} matches from cache! Filters applied.`, 'success');
+                            showMessage(`🚀 Loaded matches from cache! Filters applied.`, 'success');
                         } else {
-                            showMessage(`✅ Successfully processed ${result.pairs_processed} pairs with ${result.total_matches} total matches. Filters applied.`, 'success');
+                            showMessage(`✅ Successfully processed ${result.total_pairs} pairs. Filters applied.`, 'success');
                         }
                         return; // Exit early since refreshData() already handled everything
                     }
@@ -3563,9 +3569,9 @@
                     // If cloudiness not enabled, proceed with normal flow
                     await loadStatistics();
                     if (result.from_cache) {
-                        showMessage(`🚀 Loaded ${result.total_matches} matches from cache!`, 'success');
+                        showMessage(`🚀 Loaded matches from cache!`, 'success');
                     } else {
-                        showMessage(`✅ Successfully processed ${result.pairs_processed} pairs with ${result.total_matches} total matches`, 'success');
+                        showMessage(`✅ Successfully processed ${result.total_pairs} pairs`, 'success');
                     }
                 } else {
                     showMessage('Error: ' + result.error, 'error');
@@ -3593,11 +3599,38 @@
                     document.getElementById('progressFill').style.width = '100%';
                     document.getElementById('progressText').textContent = 'Processing completed!';
                 } else if (status.status === 'error') {
-                    document.getElementById('progressText').textContent = 'Processing failed!';
+                    document.getElementById('progressText').textContent = `Processing failed: ${status.error || 'Unknown error'}`;
+                    throw new Error(status.error || 'Processing failed');
                 }
             } catch (error) {
                 console.error('Error updating progress:', error);
             }
+        }
+
+        async function waitForProcessingComplete(progressInterval) {
+            const maxWaitTime = 10 * 60 * 1000; // 10 minutes max
+            const startTime = Date.now();
+            
+            while (Date.now() - startTime < maxWaitTime) {
+                try {
+                    const response = await fetch('/api/processing-status');
+                    const status = await response.json();
+                    
+                    if (status.status === 'completed') {
+                        return; // Processing complete
+                    } else if (status.status === 'error') {
+                        throw new Error(status.error || 'Processing failed');
+                    }
+                    
+                    // Wait a bit before next poll
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                } catch (error) {
+                    console.error('Error waiting for processing:', error);
+                    throw error;
+                }
+            }
+            
+            throw new Error('Processing timeout - exceeded maximum wait time');
         }
 
         async function loadStatisticsWithoutPlots() {

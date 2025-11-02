@@ -2323,113 +2323,134 @@ def process_range():
         if use_ransac_homography:
             print(f"🎯 RANSAC/Homography settings: threshold={ransac_threshold}, min_matches={ransac_min_matches}")
         
-        # Set the enhancement method for the process_image_pair function
-        process_image_pair.enhancement_method = contrast_enhancement
-        
-        # Process each pair in the range
-        global cache_cleared_by_user
-        cache_cleared_by_user = False  # Reset flag when processing new data
-        processed_matches = []
-        # Clear filtered data when processing new images to avoid showing stale data
-        current_filtered_matches = []
-        current_filters = {}
-        print(f"🔄 Cleared filtered data and filters for new image processing")
-        
-        for i in range(start_idx, end_idx):
-            # Update progress
-            current_pair = i - start_idx + 1
-            progress = (current_pair / total_pairs) * 100
+        # Process in background thread to allow progress polling
+        def process_range_thread():
+            global processed_matches, processing_status, current_filtered_matches, current_filters, cache_cleared_by_user
             
-            processing_status.update({
-                'progress': progress,
-                'current_pair': current_pair,
-                'status': 'processing'
-            })
-            
-            image1_path = os.path.join(photos_dir, image_files[i])
-            image2_path = os.path.join(photos_dir, image_files[i + 1])
-            
-            # Calculate image properties
-            img1_props = calculate_image_properties(image1_path)
-            img2_props = calculate_image_properties(image2_path)
-            
-            # Calculate cloudiness classification for this pair
-            if img1_props and img2_props:
-                avg_brightness = (img1_props['brightness'] + img2_props['brightness']) / 2
-                avg_contrast = (img1_props['contrast'] + img2_props['contrast']) / 2
+            try:
+                # Set the enhancement method for the process_image_pair function
+                process_image_pair.enhancement_method = contrast_enhancement
                 
-                # Use the updated cloudiness classification logic
-                if avg_brightness >= 120 and avg_contrast >= 55:
-                    pair_cloudiness = 'clear'
-                elif avg_brightness <= 60 or avg_contrast <= 40:
-                    pair_cloudiness = 'mostly cloudy'
-            
-            # Process the pair
-            matches = process_image_pair(image1_path, image2_path, algorithm, use_flann, use_ransac_homography, 
-                                       ransac_threshold, ransac_min_matches, max_features)
-            
-            # Calculate time difference for this pair
-            time_diff = get_time_difference(image1_path, image2_path)
-            
-            # Add metadata to each match
-            for match in matches:
-                match['pair_index'] = i
-                match['image1_name'] = image_files[i]
-                match['image2_name'] = image_files[i + 1]
-                match['image1_path'] = image1_path
-                match['image2_path'] = image2_path
-                match['algorithm'] = algorithm
-                match['use_flann'] = use_flann
-                match['use_ransac_homography'] = use_ransac_homography
-                match['ransac_threshold'] = ransac_threshold
-                match['ransac_min_matches'] = ransac_min_matches
-                match['time_difference'] = time_diff
-                match['image1_properties'] = img1_props
-                match['image2_properties'] = img2_props
-                match['cloudiness'] = pair_cloudiness
+                # Process each pair in the range
+                cache_cleared_by_user = False  # Reset flag when processing new data
+                processed_matches = []
+                # Clear filtered data when processing new images to avoid showing stale data
+                current_filtered_matches = []
+                current_filters = {}
+                print(f"🔄 Cleared filtered data and filters for new image processing")
                 
-                # ML classification will be applied later when the filter is enabled
-                # This avoids the performance hit during initial data loading
-                match['ml_classification1'] = None
-                match['ml_confidence1'] = 0.0
-                match['ml_classification2'] = None
-                match['ml_confidence2'] = 0.0
-                match['ml_classification'] = None
-                match['ml_confidence'] = 0.0
-            
-            processed_matches.extend(matches)
+                for i in range(start_idx, end_idx):
+                    # Update progress
+                    current_pair = i - start_idx + 1
+                    progress = (current_pair / total_pairs) * 100
+                    
+                    processing_status.update({
+                        'progress': progress,
+                        'current_pair': current_pair,
+                        'status': 'processing'
+                    })
+                    
+                    image1_path = os.path.join(photos_dir, image_files[i])
+                    image2_path = os.path.join(photos_dir, image_files[i + 1])
+                    
+                    # Calculate image properties
+                    img1_props = calculate_image_properties(image1_path)
+                    img2_props = calculate_image_properties(image2_path)
+                    
+                    # Calculate cloudiness classification for this pair
+                    pair_cloudiness = None
+                    if img1_props and img2_props:
+                        avg_brightness = (img1_props['brightness'] + img2_props['brightness']) / 2
+                        avg_contrast = (img1_props['contrast'] + img2_props['contrast']) / 2
+                        
+                        # Use the updated cloudiness classification logic
+                        if avg_brightness >= 120 and avg_contrast >= 55:
+                            pair_cloudiness = 'clear'
+                        elif avg_brightness <= 60 or avg_contrast <= 40:
+                            pair_cloudiness = 'mostly cloudy'
+                    
+                    # Process the pair
+                    matches = process_image_pair(image1_path, image2_path, algorithm, use_flann, use_ransac_homography, 
+                                               ransac_threshold, ransac_min_matches, max_features)
+                    
+                    # Calculate time difference for this pair
+                    time_diff = get_time_difference(image1_path, image2_path)
+                    
+                    # Add metadata to each match
+                    for match in matches:
+                        match['pair_index'] = i
+                        match['image1_name'] = image_files[i]
+                        match['image2_name'] = image_files[i + 1]
+                        match['image1_path'] = image1_path
+                        match['image2_path'] = image2_path
+                        match['algorithm'] = algorithm
+                        match['use_flann'] = use_flann
+                        match['use_ransac_homography'] = use_ransac_homography
+                        match['ransac_threshold'] = ransac_threshold
+                        match['ransac_min_matches'] = ransac_min_matches
+                        match['time_difference'] = time_diff
+                        match['image1_properties'] = img1_props
+                        match['image2_properties'] = img2_props
+                        match['cloudiness'] = pair_cloudiness
+                        
+                        # ML classification will be applied later when the filter is enabled
+                        # This avoids the performance hit during initial data loading
+                        match['ml_classification1'] = None
+                        match['ml_confidence1'] = 0.0
+                        match['ml_classification2'] = None
+                        match['ml_confidence2'] = 0.0
+                        match['ml_classification'] = None
+                        match['ml_confidence'] = 0.0
+                    
+                    processed_matches.extend(matches)
+                
+                # Mark as completed
+                processing_status.update({
+                    'progress': 100,
+                    'current_pair': total_pairs,
+                    'status': 'completed'
+                })
+                
+                # Print summary
+                print(f"📊 Processing complete: {len(processed_matches)} total matches from {total_pairs} pairs")
+                if use_ransac_homography:
+                    print(f"🎯 RANSAC/Homography filtering was applied with threshold={ransac_threshold}")
+                else:
+                    print(f"ℹ️ No RANSAC/Homography filtering applied")
+                
+                # Summary of processing
+                if processed_matches:
+                    print(f"📊 Processing complete: {len(processed_matches)} total matches from {total_pairs} pairs")
+                
+                # Save results to cache
+                print(f"💾 Saving {len(processed_matches)} matches to cache...")
+                save_v2_cache(cache_key, processed_matches)
+                
+                # Log data loading completion
+                data_logger.info("📂 DATA LOADING COMPLETED")
+                data_logger.info(f"📂 Final results: {len(processed_matches)} matches from {end_idx - start_idx} pairs")
+                data_logger.info(f"📂 Processing parameters used: {json.dumps(data, indent=2)}")
+                
+            except Exception as e:
+                print(f"❌ Error in background processing thread: {e}")
+                import traceback
+                traceback.print_exc()
+                processing_status.update({
+                    'status': 'error',
+                    'error': str(e)
+                })
         
-        # Mark as completed
-        processing_status.update({
-            'progress': 100,
-            'current_pair': total_pairs,
-            'status': 'completed'
-        })
+        # Start processing in background thread
+        thread = threading.Thread(target=process_range_thread)
+        thread.daemon = True
+        thread.start()
         
-        # Print summary
-        print(f"📊 Processing complete: {len(processed_matches)} total matches from {total_pairs} pairs")
-        if use_ransac_homography:
-            print(f"🎯 RANSAC/Homography filtering was applied with threshold={ransac_threshold}")
-        else:
-            print(f"ℹ️ No RANSAC/Homography filtering applied")
-        
-        # Summary of processing
-        if processed_matches:
-            print(f"📊 Processing complete: {len(processed_matches)} total matches from {total_pairs} pairs")
-        
-        # Save results to cache
-        print(f"💾 Saving {len(processed_matches)} matches to cache...")
-        save_v2_cache(cache_key, processed_matches)
-        
-        # Log data loading completion
-        data_logger.info("📂 DATA LOADING COMPLETED")
-        data_logger.info(f"📂 Final results: {len(processed_matches)} matches from {end_idx - start_idx} pairs")
-        data_logger.info(f"📂 Processing parameters used: {json.dumps(data, indent=2)}")
-        
+        # Return immediately so frontend can poll for progress
         return jsonify({
             'success': True,
-            'total_matches': len(processed_matches),
-            'pairs_processed': end_idx - start_idx,
+            'status': 'processing',
+            'message': 'Processing started',
+            'total_pairs': total_pairs,
             'from_cache': False
         })
         
