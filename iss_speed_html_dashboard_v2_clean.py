@@ -2039,6 +2039,15 @@ def create_plot_data_from_filtered(filtered_data, speed_mode='dynamic_gsd'):
 def index():
     return render_template('dashboard_v2_clean.html')
 
+@app.route('/favicon.ico')
+def favicon():
+    """Serve favicon icon"""
+    try:
+        return send_file('static/favicon.ico', mimetype='image/vnd.microsoft.icon')
+    except FileNotFoundError:
+        # Fallback if favicon doesn't exist
+        return '', 204
+
 @app.route('/health')
 def health():
     """Simple health check endpoint for Railway"""
