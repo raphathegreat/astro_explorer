@@ -2345,11 +2345,14 @@ def process_range():
                     current_pair = i - start_idx + 1
                     progress = (current_pair / total_pairs) * 100
                     
-                    processing_status.update({
-                        'progress': progress,
-                        'current_pair': current_pair,
-                        'status': 'processing'
-                    })
+                    # Update status atomically
+                    processing_status['progress'] = progress
+                    processing_status['current_pair'] = current_pair
+                    processing_status['status'] = 'processing'
+                    
+                    # Log progress for debugging (especially on Railway)
+                    if current_pair % max(1, total_pairs // 10) == 0 or current_pair == 1:
+                        print(f"📊 Processing progress: {progress:.1f}% - pair {current_pair}/{total_pairs}")
                     
                     image1_path = os.path.join(photos_dir, image_files[i])
                     image2_path = os.path.join(photos_dir, image_files[i + 1])
@@ -2406,11 +2409,10 @@ def process_range():
                     processed_matches.extend(matches)
                 
                 # Mark as completed
-                processing_status.update({
-                    'progress': 100,
-                    'current_pair': total_pairs,
-                    'status': 'completed'
-                })
+                processing_status['progress'] = 100
+                processing_status['current_pair'] = total_pairs
+                processing_status['status'] = 'completed'
+                print(f"✅ Processing status set to completed: {processing_status}")
                 
                 # Print summary
                 print(f"📊 Processing complete: {len(processed_matches)} total matches from {total_pairs} pairs")
