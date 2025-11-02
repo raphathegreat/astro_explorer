@@ -37,20 +37,22 @@ import json
 
 app = Flask(__name__)
 
-# Application version - automatically derived from git, environment variable, or deployment timestamp
+# Application version - read from version.py file (updated before each commit)
 def get_app_version():
-    """Get application version - tries multiple sources for automatic versioning"""
-    base_version = "2.1.0"
+    """Get application version from version.py file (updated before each commit)"""
+    try:
+        # Try to import version from version.py file
+        import version
+        if hasattr(version, 'VERSION') and version.VERSION:
+            return version.VERSION
+    except ImportError:
+        # version.py doesn't exist - fallback
+        pass
+    except Exception:
+        # Error reading version.py - fallback
+        pass
     
-    # Check if running on Railway
-    is_railway = os.environ.get('RAILWAY_ENVIRONMENT') is not None or os.environ.get('RAILWAY_SERVICE_NAME') is not None
-    
-    # Priority 1: Check for version in environment variable (set during Railway build)
-    env_version = os.environ.get('APP_VERSION') or os.environ.get('RAILWAY_RELEASE_VERSION') or os.environ.get('RAILWAY_RELEASE_ID')
-    if env_version:
-        return f"{base_version} (build: {env_version})"
-    
-    # Priority 2: Try git commit hash (works locally and if git available)
+    # Fallback: try git commit hash (for local development)
     try:
         import subprocess
         git_hash = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'], 
@@ -58,33 +60,12 @@ def get_app_version():
         git_date = subprocess.check_output(['git', 'log', '-1', '--format=%cd', '--date=short'], 
                                           stderr=subprocess.DEVNULL, timeout=2).decode('utf-8').strip()
         if git_hash and git_date:
-            return f"{base_version}-{git_hash} ({git_date})"
+            return f"2.1.0-{git_hash} ({git_date})"
     except Exception:
         pass
     
-    # Priority 3: Use deployment timestamp (for Railway)
-    deploy_time = os.environ.get('RAILWAY_DEPLOYMENT_TIMESTAMP') or os.environ.get('RAILWAY_RELEASE_CREATED_AT')
-    if deploy_time:
-        from datetime import datetime
-        try:
-            dt = datetime.fromisoformat(deploy_time.replace('Z', '+00:00'))
-            return f"{base_version} (deployed: {dt.strftime('%Y-%m-%d %H:%M')})"
-        except:
-            try:
-                # Try parsing as unix timestamp
-                dt = datetime.fromtimestamp(float(deploy_time))
-                return f"{base_version} (deployed: {dt.strftime('%Y-%m-%d %H:%M')})"
-            except:
-                return f"{base_version} (deployed: {deploy_time[:10]})"
-    
-    # Priority 4: For Railway, use current timestamp as fallback
-    if is_railway:
-        from datetime import datetime
-        now = datetime.now()
-        return f"{base_version} (deployed: {now.strftime('%Y-%m-%d %H:%M')})"
-    
-    # Priority 5: Fallback to base version (should only happen locally if git fails)
-    return base_version
+    # Final fallback
+    return "2.1.0"
 
 APP_VERSION = get_app_version()
 

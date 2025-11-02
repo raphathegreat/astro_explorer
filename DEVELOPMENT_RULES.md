@@ -22,11 +22,17 @@ git checkout -b feature/your-feature-name
 # 4. Test your changes
 python3 realistic_test.py
 
-# 5. Commit changes
+# 5. Update version.py before committing (if merging to main)
+# Get commit hash: git rev-parse --short HEAD
+# Get current date/time: date +"%Y-%m-%d %H:%M"
+# Update version.py with: VERSION = "2.1.0-<hash> (YYYY-MM-DD HH:MM)"
+# This ensures Railway shows the correct commit date/time in the header
+
+# 6. Commit changes
 git add .
 git commit -m "feat: Add your feature description"
 
-# 6. Push branch to GitHub
+# 7. Push branch to GitHub
 git push origin feature/your-feature-name
 ```
 
@@ -41,20 +47,41 @@ git push origin feature/your-feature-name
 # 1. Ensure all tests pass
 python3 realistic_test.py
 
-# 2. Switch to main branch
+# 2. Update version.py with latest commit info (BEFORE merging to main)
+# Get commit hash: git rev-parse --short HEAD
+# Get current date/time: date +"%Y-%m-%d %H:%M"
+# Update version.py: VERSION = "2.1.0-<hash> (YYYY-MM-DD HH:MM)"
+# This ensures the header shows correct version on Railway
+
+# 3. Commit version.py update
+git add version.py
+git commit -m "chore: Update version to latest commit"
+
+# 4. Switch to main branch
 git checkout main
 git pull origin main
 
-# 3. Merge feature branch
+# 5. Merge feature branch
 git merge feature/your-feature-name
 
-# 4. Push to production
+# 6. Push to production
 git push origin main
 
-# 5. Clean up feature branch
+# 7. Clean up feature branch
 git branch -d feature/your-feature-name
 git push origin --delete feature/your-feature-name
 ```
+
+### 📝 **Rule 4a: Version Management**
+- **MUST** update `version.py` before merging to `main`
+- **MUST** include commit hash and current date/time
+- **Format**: `VERSION = "2.1.0-<commit_hash> (YYYY-MM-DD HH:MM)"`
+- **Commands to get values**:
+  ```bash
+  git rev-parse --short HEAD  # Get commit hash
+  date +"%Y-%m-%d %H:%M"      # Get current date/time
+  ```
+- **Why**: Railway deployments don't have git available, so we hardcode the version in `version.py` to display in the header
 
 ## 🏷️ **Branch Naming Conventions**
 
