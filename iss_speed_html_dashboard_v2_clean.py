@@ -2754,26 +2754,32 @@ def get_plot_data():
         pair_averages.append(avg_speed)
         pair_numbers.append(pair_idx + 1)  # Convert to 1-based indexing
         
-        # Determine color based on classification type
+        # Determine color based on classification type (ML and cloudiness are mutually exclusive)
         sample_match = next((m for m in filtered_matches if m['pair_index'] == pair_idx), None)
         if sample_match:
-            # Check if ML classification is enabled in current filters
             ml_enabled = current_filters.get('enable_ml_classification', False)
-            ml_class = sample_match.get('ml_classification')
+            cloudiness_enabled = current_filters.get('enable_cloudiness', False)
             
-            if ml_enabled and ml_class is not None:
-                # Use ML classification colors
-                print(f"🎨 Using ML classification for pair {pair_idx}: {ml_class}")
-                if ml_class == 'Good':
-                    pair_colors.append('green')  # Good
-                elif ml_class == 'Not_Good':
-                    pair_colors.append('red')    # Not_Good
+            # Enforce mutual exclusivity: ML takes priority if both are enabled
+            if ml_enabled:
+                # Use ML classification ONLY (never cloudiness)
+                ml_class = sample_match.get('ml_classification')
+                
+                if ml_class is not None:
+                    print(f"🎨 Using ML classification for pair {pair_idx}: {ml_class}")
+                    if ml_class == 'Good':
+                        pair_colors.append('green')  # Good
+                    elif ml_class == 'Not_Good':
+                        pair_colors.append('red')    # Not_Good
+                    else:
+                        pair_colors.append('gray')   # Unknown
                 else:
-                    pair_colors.append('gray')   # Unknown
-            else:
-                if ml_enabled:
-                    print(f"🎨 Using cloudiness classification for pair {pair_idx} (ML enabled: {ml_enabled}, ML class: {ml_class})")
-                # Fall back to cloudiness classification
+                    # ML enabled but classification not available - use placeholder
+                    print(f"⚠️ ML enabled but classification missing for pair {pair_idx}, using gray")
+                    pair_colors.append('gray')  # Placeholder when ML data is missing
+            
+            elif cloudiness_enabled:
+                # Use cloudiness classification
                 if sample_match.get('image1_properties') and sample_match.get('image2_properties'):
                     img1_props = sample_match['image1_properties']
                     img2_props = sample_match['image2_properties']
@@ -2794,6 +2800,9 @@ def get_plot_data():
                         pair_colors.append('orange') # partly cloudy
                 else:
                     pair_colors.append('gray')  # unknown
+            else:
+                # Neither ML nor cloudiness enabled - use gray/default
+                pair_colors.append('gray')
         else:
             pair_colors.append('gray')  # unknown
     
@@ -3164,6 +3173,17 @@ def apply_homography_filtering(kp1, kp2, matches, threshold=5.0, min_matches=10)
 def apply_match_filters(matches, filters):
     """Apply filters to matches - same filters as original dashboard (excluding GPS)"""
     filtered = matches.copy()
+    
+    # Enforce mutual exclusivity: ML classification and cloudiness cannot both be enabled
+    ml_enabled = filters.get('enable_ml_classification', False)
+    cloudiness_enabled = filters.get('enable_cloudiness', False)
+    
+    if ml_enabled and cloudiness_enabled:
+        # ML takes priority - disable cloudiness if both are enabled
+        print("⚠️ Both ML classification and cloudiness filters are enabled. ML takes priority (cloudiness disabled).")
+        filters = filters.copy()  # Don't modify the original filters dict
+        filters['enable_cloudiness'] = False
+        cloudiness_enabled = False
     
     # Keypoint percentile filter (remove bottom X% and top Y% by speed)
     if filters.get('enable_keypoint_percentile', False) and len(filtered) > 0:
