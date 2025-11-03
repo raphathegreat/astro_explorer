@@ -662,7 +662,7 @@ def calculate_gps_only_speed(image1_path, image2_path):
     print(f"    GPS-only speed (raw): {speed_kmps:.3f} km/s")
     print(f"    GPS-only speed (corrected): {corrected_speed_kmps:.3f} km/s")
     print(f"    GPS coordinates: {gps1[0]:.6f},{gps1[1]:.6f} -> {gps2[0]:.6f},{gps2[1]:.6f}")
-    print(f"    GPS distance: {real_distance_km:.3f} km, time: {time_difference:.1f}s")
+    print(f"    GPS distance: {real_distance_km:.3f} km, time: {time_difference:.3f}s")
     
     return {
         'speed_kmps': corrected_speed_kmps,  # Use corrected speed
@@ -865,7 +865,7 @@ def get_time(image):
         return time
 
 def get_time_difference(image1_path, image2_path):
-    """Get time difference between two images in seconds"""
+    """Get time difference between two images in seconds, rounded to 3 decimal places for consistency"""
     try:
         with open(image1_path, 'rb') as f:
             img1 = Image(f)
@@ -880,12 +880,13 @@ def get_time_difference(image1_path, image2_path):
                 # Parse string datetime to datetime object
                 datetime1 = datetime.strptime(datetime1_str, '%Y:%m:%d %H:%M:%S')
                 datetime2 = datetime.strptime(datetime2_str, '%Y:%m:%d %H:%M:%S')
-                return (datetime2 - datetime1).total_seconds()
+                # Round to 3 decimal places for consistency in speed calculations
+                return round((datetime2 - datetime1).total_seconds(), 3)
         
-        return 0
+        return 0.0
     except Exception as e:
         print(f"Error getting time difference: {e}")
-        return 0
+        return 0.0
 
 def enhance_image_contrast(image, method='clahe', clip_limit=3.0, tile_size=(8,8)):
     """Enhance image contrast for better feature detection"""
@@ -1913,7 +1914,7 @@ def process_image_pair(image1_path, image2_path, pair_num, stationary_threshold,
             # Always use ESA default GSD (GPS disabled)
             speed = calculate_speed_in_kmps(distance, gsd, time_difference, is_gps_gsd=False)
             if i < 3:  # Debug first 3 keypoints
-                print(f"  Keypoint {i}: distance={distance:.2f}px, gsd={gsd}m/px, time={time_difference}s")
+                print(f"  Keypoint {i}: distance={distance:.2f}px, gsd={gsd}m/px, time={time_difference:.3f}s")
                 print(f"    ESA GSD speed: {speed:.3f}km/s")
             keypoint_data.append({
                 'pair_num': pair_num,
