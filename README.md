@@ -1,6 +1,6 @@
 # 🚀 AstroPi Explorer Dashboard
 
-[[https://astropi-explorer.up.railway.app/](https://astropi-explorer.up.railway.app/)](https://astropi-explorer.up.railway.app/)
+https://astropi-explorer.up.railway.app/
 
 A comprehensive web-based dashboard for analyzing International Space Station (ISS) speed data from AstroPi mission images using computer vision and feature detection algorithms.
 
