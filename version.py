@@ -4,5 +4,5 @@
 # Use: git rev-parse --short HEAD to get commit hash
 # Use: date +"%Y-%m-%d %H:%M" to get current date/time
 
-VERSION = "2.1.0-8b62259 (2025-11-02 22:30)"
+VERSION = "2.1.0-320b808 (2025-12-03 17:42)"
 
