@@ -68,3 +68,31 @@ htmlcov/
 .env
 .env.local
 .env.*.local
+
+# ML Training Data (too large for GitHub)
+GOOD/
+NOT_GOOD/
+
+# ML Model Files (use Git LFS if needed, or host elsewhere)
+*.tflite
+edgetpu_labels.txt
+model_*.tflite
+
+# Generated baseline files
+independent_baseline_stats_*.json
+
+# IDE specific files
+.cursor/
+*.code-workspace
+
+# Backup files
+*_backup.py
+*_backup.html
+
+# Development utility scripts (keep locally, don't track)
+simple_app.py
+test_app.py
+quick_enhancement.sh
+validate_changes.py
+generate_independent_baseline.py
+version_control.py
