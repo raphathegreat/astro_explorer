@@ -2,6 +2,16 @@
 
 https://astropi-explorer.up.railway.app/
 
+The AstroDuo team (i.e Christopher and me) have registered to the astroppi challenge 2025 to calculate the ISS speed and hopefully get to have our code uploaded onboard the station's astropi.
+
+Our plan is :
+
+1. get famililar with image processing techniques, python code, AI prompt engineering
+2. Using Cursor AI we built this dashboard to try multiple statistical ways to
+3. Once we are happy with one combination of opencv + data filtering, we will finalise our code here based on ESA tutorial and get ready with version 1 (https://github.com/raphathegreat/astropi_ISS)
+4. We irterate and make it better possibly using other techniques than image processing
+5. submit before February
+
 A comprehensive web-based dashboard for analyzing International Space Station (ISS) speed data from AstroPi mission images using computer vision and feature detection algorithms.
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
