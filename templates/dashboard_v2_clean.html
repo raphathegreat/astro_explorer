@@ -2317,6 +2317,10 @@
                     <span class="btn-icon">↺</span>
                     Reset All Filters
                 </button>
+                <button class="btn btn-secondary" id="exportCsvBtn" onclick="exportToCSV()" disabled>
+                    <span class="btn-icon">📥</span>
+                    Download CSV
+                </button>
             </div>
         </div>
 
@@ -2535,6 +2539,12 @@
                         if (refreshBtn) {
                             refreshBtn.disabled = false;
                             console.log('✅ Refresh button enabled on page load - data is available');
+                        }
+                        // Also enable CSV export button
+                        const csvBtn = document.getElementById('exportCsvBtn');
+                        if (csvBtn) {
+                            csvBtn.disabled = false;
+                            console.log('✅ CSV export button enabled on page load - data is available');
                         }
                     }
                 }
@@ -3544,6 +3554,8 @@
                     
                     // Enable refresh button first
                     document.getElementById('refreshBtn').disabled = false;
+                    const exportCsvBtn = document.getElementById('exportCsvBtn');
+                    if (exportCsvBtn) exportCsvBtn.disabled = false;
                     
                     // IMPORTANT: Auto-apply cloudiness filter IMMEDIATELY after processing
                     // This ensures plot data shows classifications instead of "unknown"
@@ -4324,6 +4336,10 @@
             const refreshBtn = document.getElementById('refreshBtn');
             if (refreshBtn) refreshBtn.disabled = true;
             
+            // Also disable CSV export button
+            const exportCsvBtn = document.getElementById('exportCsvBtn');
+            if (exportCsvBtn) exportCsvBtn.disabled = true;
+            
             // Clear any status messages
             const statusElements = document.querySelectorAll('.success, .error, .info');
             statusElements.forEach(el => el.remove());
@@ -4337,6 +4353,76 @@
                 console.log('  includePartlyCloudy visually checked:', document.getElementById('includePartlyCloudy').checked);
                 console.log('  includeMostlyCloudy visually checked:', document.getElementById('includeMostlyCloudy').checked);
             }, 100);
+        }
+
+        async function exportToCSV() {
+            /**Export raw speed calculation data to CSV format*/
+            try {
+                console.log('📥 CSV Export requested');
+                
+                // Check if data is available
+                if (!plotData && !currentData) {
+                    showMessage('No data available to export. Please load data first.', 'error');
+                    return;
+                }
+                
+                // Show loading message
+                const exportBtn = document.getElementById('exportCsvBtn');
+                if (exportBtn) {
+                    exportBtn.disabled = true;
+                    exportBtn.innerHTML = '<span class="btn-icon">⏳</span> Exporting...';
+                }
+                
+                // Request CSV from backend
+                const response = await fetch('/api/export-csv', {
+                    method: 'GET',
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to export CSV');
+                }
+                
+                // Get CSV content as blob
+                const blob = await response.blob();
+                
+                // Create download link
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                // Get filename from Content-Disposition header or use default
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'iss_speed_data.csv';
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+                    if (filenameMatch) {
+                        filename = filenameMatch[1];
+                    }
+                }
+                
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                
+                // Cleanup
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                showMessage(`CSV exported successfully: ${filename}`, 'success');
+                console.log('✅ CSV export completed');
+                
+            } catch (error) {
+                console.error('❌ CSV export error:', error);
+                showMessage('Error exporting CSV: ' + error.message, 'error');
+            } finally {
+                // Re-enable button
+                const exportBtn = document.getElementById('exportCsvBtn');
+                if (exportBtn) {
+                    exportBtn.disabled = false;
+                    exportBtn.innerHTML = '<span class="btn-icon">📥</span> Download CSV';
+                }
+            }
         }
 
         function resetFilters() {

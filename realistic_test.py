@@ -300,6 +300,24 @@ class TestCleanVersion(unittest.TestCase):
             # Test cache status endpoint
             response = client.get('/api/cache-status')
             self.assertEqual(response.status_code, 200)
+            
+            # Test CSV export endpoint (should return 400 if no data, 200 if data exists)
+            response = client.get('/api/export-csv')
+            self.assertIn(response.status_code, [200, 400])
+            
+            # If we have data, verify CSV format
+            if response.status_code == 200:
+                self.assertEqual(response.content_type, 'text/csv; charset=utf-8')
+                self.assertIn('Content-Disposition', response.headers)
+                self.assertIn('attachment', response.headers['Content-Disposition'])
+                # Verify CSV content is not empty
+                csv_content = response.data.decode('utf-8')
+                self.assertGreater(len(csv_content), 0)
+                # Verify CSV has header row
+                lines = csv_content.strip().split('\n')
+                self.assertGreater(len(lines), 0)
+                # First line should be headers
+                self.assertIn('speed', lines[0].lower() or 'pair_index' in lines[0].lower())
     
     def test_global_variables(self):
         """Test that global variables are properly initialized"""

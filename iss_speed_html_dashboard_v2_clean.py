@@ -2824,6 +2824,139 @@ def apply_filters():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/export-csv', methods=['GET'])
+def export_csv():
+    """Export raw speed calculation data to CSV format
+    
+    Exports only the records that pass all applied filters (the data used for calculations).
+    If no filters are applied, exports all original data.
+    """
+    global processed_matches, current_filtered_matches
+    
+    try:
+        # Export filtered data if filters are applied, otherwise export all original data
+        data_to_export = current_filtered_matches if current_filtered_matches else processed_matches
+        
+        if not data_to_export:
+            return jsonify({'error': 'No data available to export. Please load data first.'}), 400
+        
+        # Log export request
+        data_source = 'filtered' if current_filtered_matches else 'original'
+        ui_logger.info("📥 CSV EXPORT REQUEST - User requested CSV export")
+        ui_logger.info(f"📥 Exporting {len(data_to_export)} records ({data_source} data - records used for calculations)")
+        
+        # Create CSV content
+        import csv
+        from io import StringIO
+        
+        output = StringIO()
+        
+        # Determine CSV columns based on available fields in the first match
+        if data_to_export:
+            # Get all possible fields from all matches
+            all_fields = set()
+            for match in data_to_export:
+                all_fields.update(match.keys())
+            
+            # Define column order (prioritize important fields)
+            priority_fields = ['pair_index', 'pair_num', 'keypoint_idx', 'speed', 'pixel_distance', 'distance', 
+                             'time_difference', 'time_diff', 'gsd_used', 'image1', 'image2', 'image1_path', 
+                             'image2_path', 'brightness', 'contrast', 'cloudiness', 'matches', 'match_distance']
+            
+            # Order columns: priority fields first, then remaining fields alphabetically
+            columns = []
+            for field in priority_fields:
+                if field in all_fields:
+                    columns.append(field)
+            for field in sorted(all_fields):
+                if field not in columns:
+                    columns.append(field)
+            
+            # Flatten nested structures (like image1_properties, image2_properties) into separate columns
+            flattened_columns = []
+            nested_fields_to_flatten = ['image1_properties', 'image2_properties']
+            
+            # First, collect all regular columns (excluding nested dict fields)
+            for col in columns:
+                if col not in nested_fields_to_flatten:
+                    flattened_columns.append(col)
+            
+            # Then, add flattened columns for nested dict fields
+            for nested_field in nested_fields_to_flatten:
+                if nested_field in all_fields:
+                    # Find all unique sub-keys in this nested field across all matches
+                    sub_keys = set()
+                    for match in data_to_export:
+                        nested_value = match.get(nested_field)
+                        if isinstance(nested_value, dict):
+                            sub_keys.update(nested_value.keys())
+                    
+                    # Add flattened columns for each sub-key
+                    for sub_key in sorted(sub_keys):
+                        flattened_col_name = f"{nested_field}_{sub_key}"
+                        flattened_columns.append(flattened_col_name)
+            
+            writer = csv.DictWriter(output, fieldnames=flattened_columns, extrasaction='ignore')
+            writer.writeheader()
+            
+            # Write data rows
+            for match in data_to_export:
+                row = {}
+                for key in flattened_columns:
+                    # Check if this is a flattened nested field (e.g., image1_properties_brightness)
+                    if key.startswith('image1_properties_') or key.startswith('image2_properties_'):
+                        # Extract parent field and sub-key
+                        if key.startswith('image1_properties_'):
+                            parent_key = 'image1_properties'
+                            sub_key = key.replace('image1_properties_', '')
+                        else:  # image2_properties_
+                            parent_key = 'image2_properties'
+                            sub_key = key.replace('image2_properties_', '')
+                        
+                        # Get value from nested dict
+                        parent_value = match.get(parent_key)
+                        if isinstance(parent_value, dict):
+                            row[key] = parent_value.get(sub_key, '')
+                        else:
+                            row[key] = ''
+                    else:
+                        # Regular field (not nested)
+                        value = match.get(key)
+                        if value is None:
+                            row[key] = ''
+                        elif isinstance(value, dict):
+                            # Skip dict fields - they should be flattened
+                            row[key] = ''
+                        elif isinstance(value, list):
+                            # Convert lists to comma-separated string
+                            row[key] = ','.join(str(v) for v in value)
+                        elif isinstance(value, tuple):
+                            # Convert tuples to comma-separated string
+                            row[key] = ','.join(str(v) for v in value)
+                        else:
+                            row[key] = value
+                writer.writerow(row)
+        
+        csv_content = output.getvalue()
+        output.close()
+        
+        # Create response with CSV content
+        from flask import Response
+        response = Response(
+            csv_content,
+            mimetype='text/csv',
+            headers={
+                'Content-Disposition': f'attachment; filename=iss_speed_data_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+            }
+        )
+        
+        logger.info(f"📥 CSV EXPORT SUCCESS: {len(data_to_export)} records exported")
+        return response
+        
+    except Exception as e:
+        logger.error(f"📥 CSV EXPORT ERROR: {str(e)}")
+        return jsonify({'error': f'Failed to export CSV: {str(e)}'}), 500
+
 @app.route('/api/processing-status')
 def get_processing_status():
     """Get current processing status for progress bar"""
