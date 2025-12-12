@@ -2957,6 +2957,166 @@ def export_csv():
         logger.error(f"📥 CSV EXPORT ERROR: {str(e)}")
         return jsonify({'error': f'Failed to export CSV: {str(e)}'}), 500
 
+@app.route('/api/requirements', methods=['POST'])
+def get_requirements():
+    """Generate requirements document for replicating the current logic with user-selected parameters"""
+    try:
+        data = request.json
+        requirements = {
+            'title': 'ISS Speed Calculation Requirements',
+            'description': 'Parameters required to replicate the ISS speed calculation logic with current settings',
+            'parameters': {}
+        }
+        
+        # Algorithm Configuration
+        requirements['parameters']['algorithm_configuration'] = {
+            'algorithm': data.get('algorithm', 'ORB'),
+            'use_flann': data.get('use_flann', False),
+            'max_features': data.get('max_features', 1000),
+            'contrast_enhancement': data.get('contrast_enhancement', 'clahe'),
+            'use_ransac_homography': data.get('use_ransac_homography', False),
+            'ransac_threshold': data.get('ransac_threshold', 5.0),
+            'ransac_min_matches': data.get('ransac_min_matches', 10)
+        }
+        
+        # Image Range
+        requirements['parameters']['image_range'] = {
+            'start_idx': data.get('start_idx', 0),
+            'end_idx': data.get('end_idx', 0)
+        }
+        
+        # Filters
+        filters = {}
+        if data.get('enable_keypoint_percentile', False):
+            filters['keypoint_percentile'] = {
+                'enabled': True,
+                'bottom_percentile': data.get('keypoint_percentile_bottom', 5),
+                'top_percentile': data.get('keypoint_percentile_top', 5)
+            }
+        
+        if data.get('enable_percentile', False):
+            filters['minimum_matches'] = {
+                'enabled': True,
+                'minimum_matches': data.get('pair_percentile', 10)
+            }
+        
+        if data.get('enable_std_dev', False):
+            filters['standard_deviation'] = {
+                'enabled': True,
+                'multiplier': data.get('std_dev_multiplier', 2.0)
+            }
+        
+        if data.get('enable_cloudiness', False):
+            filters['cloudiness'] = {
+                'enabled': True,
+                'include_partly_cloudy': data.get('include_partly_cloudy', True),
+                'include_mostly_cloudy': data.get('include_mostly_cloudy', True),
+                'clear_brightness_min': data.get('clear_brightness_min', 120),
+                'clear_contrast_min': data.get('clear_contrast_min', 55),
+                'cloudy_brightness_max': data.get('cloudy_brightness_max', 60),
+                'cloudy_contrast_max': data.get('cloudy_contrast_max', 40)
+            }
+        
+        if data.get('enable_custom_gsd', False):
+            filters['custom_gsd'] = {
+                'enabled': True,
+                'gsd_value': data.get('custom_gsd', 12648)
+            }
+        
+        requirements['parameters']['filters'] = filters
+        
+        # Format as readable text
+        formatted_text = format_requirements_text(requirements)
+        
+        ui_logger.info("📋 REQUIREMENTS REQUEST - User requested requirements document")
+        return jsonify({
+            'success': True,
+            'requirements': requirements,
+            'formatted_text': formatted_text
+        })
+        
+    except Exception as e:
+        logger.error(f"📋 REQUIREMENTS ERROR: {str(e)}")
+        return jsonify({'error': f'Failed to generate requirements: {str(e)}'}), 500
+
+def format_requirements_text(requirements):
+    """Format requirements as AI-agent-friendly implementation guide"""
+    lines = []
+    lines.append("=" * 80)
+    lines.append("ISS SPEED CALCULATION - CONFIGURATION SUMMARY")
+    lines.append("=" * 80)
+    lines.append("")
+    
+    # Algorithm Configuration
+    algo_config = requirements['parameters']['algorithm_configuration']
+    img_range = requirements['parameters']['image_range']
+    filters = requirements['parameters']['filters']
+    
+    # Calculate GSD value
+    custom_gsd_enabled = 'custom_gsd' in filters
+    if custom_gsd_enabled:
+        gsd_value = filters['custom_gsd']['gsd_value']
+    else:
+        gsd_value = 12648
+    
+    use_flann = algo_config['use_flann']
+    use_ransac = algo_config['use_ransac_homography']
+    enhancement = algo_config['contrast_enhancement']
+    
+    # CONFIGURATION SUMMARY ONLY
+    lines.append("Image Capture:")
+    lines.append("  - Source: Raspberry Pi Camera (picamera)")
+    lines.append("  - Capture Interval: Configurable (e.g., 14 seconds)")
+    lines.append("  - Program Duration: 9 minutes 30 seconds (570 seconds)")
+    lines.append("  - Processing: Real-time, pairs processed as captured")
+    lines.append("")
+    lines.append("Algorithm: {algorithm}".format(algorithm=algo_config['algorithm']))
+    lines.append("FLANN Matching: {use_flann}".format(use_flann=use_flann))
+    lines.append("Max Features: {max_features}".format(max_features=algo_config['max_features']))
+    lines.append("Contrast Enhancement: {enhancement}".format(enhancement=enhancement))
+    lines.append("RANSAC/Homography: {use_ransac}".format(use_ransac=use_ransac))
+    if use_ransac:
+        lines.append("  RANSAC Threshold: {threshold}".format(threshold=algo_config['ransac_threshold']))
+        lines.append("  RANSAC Min Matches: {min_matches}".format(min_matches=algo_config['ransac_min_matches']))
+    lines.append("GSD: {gsd} cm/pixel".format(gsd=gsd_value))
+    lines.append("")
+    lines.append("Data Structure:")
+    lines.append("  - All keypoints from all image pairs are stored in a single list in memory")
+    lines.append("  - Each keypoint/match contains: speed, pixel_distance, time_difference, gsd_used, pair_index")
+    lines.append("  - Final speed calculation: Use the MEAN (average) of all filtered match speeds")
+    lines.append("")
+    lines.append("Output:")
+    lines.append("  - Result File: result.txt")
+    lines.append("  - Contains: Mean speed only")
+    lines.append("")
+    lines.append("Enabled Filters:")
+    if filters:
+        # Filter out cloudiness filter if it doesn't actually filter anything
+        effective_filters = {}
+        for filter_name, filter_data in filters.items():
+            if filter_name == 'cloudiness':
+                # Only include if it actually filters (not if both partly and mostly are included)
+                include_partly = filter_data.get('include_partly_cloudy', True)
+                include_mostly = filter_data.get('include_mostly_cloudy', True)
+                if not (include_partly and include_mostly):
+                    effective_filters[filter_name] = filter_data
+            else:
+                effective_filters[filter_name] = filter_data
+        
+        if effective_filters:
+            for filter_name, filter_data in effective_filters.items():
+                lines.append(f"  - {filter_name}: {filter_data}")
+        else:
+            lines.append("  - None")
+    else:
+        lines.append("  - None")
+    lines.append("")
+    lines.append("=" * 80)
+    lines.append("END OF REQUIREMENTS")
+    lines.append("=" * 80)
+    
+    return "\n".join(lines)
+
 @app.route('/api/processing-status')
 def get_processing_status():
     """Get current processing status for progress bar"""
