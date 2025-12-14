@@ -1666,6 +1666,7 @@ def process_data(photos_dir, pair_percentile=10,  # Now represents minimum match
 
 def apply_filters_to_raw_data(enable_percentile=False, pair_percentile=10,  # Now represents minimum matches, not percentile
                              enable_std_dev=False, std_dev_multiplier=2.0,
+                             enable_mad=False, mad_multiplier=3.0,
                              enable_keypoint_percentile=False, keypoint_percentile_bottom=5, keypoint_percentile_top=5,
                              enable_sequence=False, start_pair=1, end_pair=41,
                              enable_cloudiness=False, include_partly_cloudy=True, include_mostly_cloudy=True,
@@ -1685,7 +1686,7 @@ def apply_filters_to_raw_data(enable_percentile=False, pair_percentile=10,  # No
     
     # Default filter order if not provided
     if filter_order is None:
-        filter_order = ['sequence', 'keypoint_percentile', 'percentile', 'std_dev', 'cloudiness', 'gps_consistency']
+        filter_order = ['sequence', 'keypoint_percentile', 'percentile', 'std_dev', 'mad', 'cloudiness', 'gps_consistency']
     
     print(f"Debug: Applying filters in order: {filter_order}")
     
@@ -1821,6 +1822,37 @@ def apply_filters_to_raw_data(enable_percentile=False, pair_percentile=10,  # No
                 print(f"Debug: Step {step} - AFTER std dev filter - NO KEYPOINTS REMAIN!")
             
             print(f"Debug: Step {step} - Std dev filter ({std_dev_multiplier}σ) completed")
+            
+        elif filter_type == 'mad' and enable_mad and len(filtered_keypoints) > 0 and mad_multiplier > 0:
+            # Apply MAD (Median Absolute Deviation) filter (robust outlier removal)
+            speeds = [kp['speed'] for kp in filtered_keypoints]
+            median_speed = np.median(speeds)
+            
+            # Calculate MAD: median of absolute deviations from median
+            absolute_deviations = [abs(speed - median_speed) for speed in speeds]
+            mad = np.median(absolute_deviations)
+            
+            # Calculate the range
+            min_allowed = median_speed - (mad_multiplier * mad)
+            max_allowed = median_speed + (mad_multiplier * mad)
+            
+            print(f"Debug: Step {step} - BEFORE MAD filter - {len(filtered_keypoints)} keypoints")
+            print(f"Debug: Step {step} - Speed range before: {min(speeds):.3f} to {max(speeds):.3f}")
+            print(f"Debug: Step {step} - Median: {median_speed:.3f}, MAD: {mad:.3f}")
+            print(f"Debug: Step {step} - Allowed range: {min_allowed:.3f} to {max_allowed:.3f}")
+            
+            # Keep only speeds within mad_multiplier * MAD from median
+            filtered_keypoints = [kp for kp in filtered_keypoints 
+                                 if abs(kp['speed'] - median_speed) <= mad_multiplier * mad]
+            
+            if filtered_keypoints:
+                filtered_speeds = [kp['speed'] for kp in filtered_keypoints]
+                print(f"Debug: Step {step} - AFTER MAD filter - {len(filtered_keypoints)} keypoints")
+                print(f"Debug: Step {step} - Speed range after: {min(filtered_speeds):.3f} to {max(filtered_speeds):.3f}")
+            else:
+                print(f"Debug: Step {step} - AFTER MAD filter - NO KEYPOINTS REMAIN!")
+            
+            print(f"Debug: Step {step} - MAD filter ({mad_multiplier}*MAD) completed")
             
         elif filter_type == 'cloudiness' and enable_cloudiness:
             # Apply cloudiness filter
@@ -3006,6 +3038,12 @@ def get_requirements():
                 'multiplier': data.get('std_dev_multiplier', 2.0)
             }
         
+        if data.get('enable_mad', False):
+            filters['mad'] = {
+                'enabled': True,
+                'multiplier': data.get('mad_multiplier', 3.0)
+            }
+        
         if data.get('enable_cloudiness', False):
             filters['cloudiness'] = {
                 'enabled': True,
@@ -3694,6 +3732,23 @@ def apply_match_filters(matches, filters):
         # Filter matches within bounds
         filtered = [m for m in filtered if lower_bound <= m['speed'] <= upper_bound]
     
+    # MAD (Median Absolute Deviation) filter (robust outlier removal)
+    if filters.get('enable_mad', False) and len(filtered) > 0:
+        mad_multiplier = filters.get('mad_multiplier', 3.0)
+        speeds = [m['speed'] for m in filtered]
+        median_speed = np.median(speeds)
+        
+        # Calculate MAD: median of absolute deviations from median
+        absolute_deviations = [abs(speed - median_speed) for speed in speeds]
+        mad = np.median(absolute_deviations)
+        
+        # Calculate bounds
+        lower_bound = median_speed - (mad_multiplier * mad)
+        upper_bound = median_speed + (mad_multiplier * mad)
+        
+        # Filter matches within bounds
+        filtered = [m for m in filtered if lower_bound <= m['speed'] <= upper_bound]
+    
     # Cloudiness filter (based on image properties)
     if filters.get('enable_cloudiness', False) and len(filtered) > 0:
         clear_brightness_min = filters.get('clear_brightness_min', 120)
@@ -4070,12 +4125,13 @@ def process_folder():
     cloudy_brightness_max = float(data.get('cloudy_brightness_max', 60))
     cloudy_contrast_max = float(data.get('cloudy_contrast_max', 15))
     std_dev_multiplier = float(data.get('std_dev_multiplier', 2.0))
+    mad_multiplier = float(data.get('mad_multiplier', 3.0))
     keypoint_percentile_bottom = float(data.get('keypoint_percentile_bottom', 5))
     keypoint_percentile_top = float(data.get('keypoint_percentile_top', 5))
     match_quality_threshold = float(data.get('match_quality_threshold', 30))
     start_pair = int(data.get('start_pair', 1))
     end_pair = int(data.get('end_pair', 41))
-    filter_order = data.get('filter_order', ['sequence', 'gps_consistency', 'keypoint_percentile', 'percentile', 'std_dev', 'cloudiness'])
+    filter_order = data.get('filter_order', ['sequence', 'gps_consistency', 'keypoint_percentile', 'percentile', 'std_dev', 'mad', 'cloudiness'])
     
     # Process in background thread
     def process_thread():

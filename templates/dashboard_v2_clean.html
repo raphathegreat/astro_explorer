@@ -2258,6 +2258,25 @@
                                 <span class="value-display" id="stdDevMultiplierValue">2.0σ</span>
                             </div>
                         </div>
+                        <div class="filter-item">
+                            <div class="filter-header">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="enableMAD">
+                                    <span class="checkmark"></span>
+                                    MAD (Median Absolute Deviation) Filter
+                                </label>
+                                <p class="filter-description"><strong>What it does:</strong> Filters based on statistical outliers using Median Absolute Deviation<br>
+                                    <strong>Method:</strong> Uses np.median() to calculate MAD and removes matches beyond X*MAD from median<br>
+                                    <strong>Logic:</strong> Removes matches with speeds more than X*MAD away from the median speed<br>
+                                    <strong>Example:</strong> 3.0*MAD means it removes matches with speeds >3*MAD from the median<br>
+                                    <strong>Purpose:</strong> Robust outlier removal that is less sensitive to extreme values than standard deviation</p>
+                            </div>
+                            <div class="filter-params" id="madParam" style="display: none;">
+                                <label>MAD Multiplier:</label>
+                                <input type="number" id="madMultiplier" value="3.0" min="0.1" max="10.0" step="0.5">
+                                <span class="value-display" id="madMultiplierValue">3.0*MAD</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -2800,6 +2819,31 @@
                         } else {
                             params.style.display = 'none';
                         }
+                    }
+                });
+            }
+
+            const enableMAD = document.getElementById('enableMAD');
+            if (enableMAD) {
+                enableMAD.addEventListener('change', function() {
+                    const params = document.getElementById('madParam');
+                    if (params) {
+                        if (this.checked) {
+                            params.style.display = 'flex';
+                        } else {
+                            params.style.display = 'none';
+                        }
+                    }
+                });
+            }
+
+            // Update MAD multiplier display
+            const madMultiplier = document.getElementById('madMultiplier');
+            if (madMultiplier) {
+                madMultiplier.addEventListener('input', function() {
+                    const valueDisplay = document.getElementById('madMultiplierValue');
+                    if (valueDisplay) {
+                        valueDisplay.textContent = this.value + '*MAD';
                     }
                 });
             }
@@ -4213,7 +4257,9 @@
                 enablePercentile: document.getElementById('enablePercentile')?.checked || false,
                 pairPercentile: document.getElementById('pairPercentile')?.value || '10',
                 enableStdDev: document.getElementById('enableStdDev')?.checked || false,
-                stdDevMultiplier: document.getElementById('stdDevMultiplier')?.value || '2.0'
+                stdDevMultiplier: document.getElementById('stdDevMultiplier')?.value || '2.0',
+                enableMAD: document.getElementById('enableMAD')?.checked || false,
+                madMultiplier: document.getElementById('madMultiplier')?.value || '3.0'
             };
             
             logAction('REFRESH_DATA', currentFilters);
@@ -4244,6 +4290,9 @@
             
             const enableStdDev = document.getElementById('enableStdDev').checked;
             const stdDevMultiplier = parseFloat(document.getElementById('stdDevMultiplier').value);
+            
+            const enableMAD = document.getElementById('enableMAD').checked;
+            const madMultiplier = parseFloat(document.getElementById('madMultiplier').value);
             
             const enableCloudiness = document.getElementById('enableCloudiness').checked;
             const includePartlyCloudy = document.getElementById('includePartlyCloudy').checked;
@@ -4281,6 +4330,11 @@
             if (enableStdDev) {
                 filters.enable_std_dev = true;
                 filters.std_dev_multiplier = stdDevMultiplier;
+            }
+            
+            if (enableMAD) {
+                filters.enable_mad = true;
+                filters.mad_multiplier = madMultiplier;
             }
             
             if (enableCloudiness) {
@@ -4370,6 +4424,9 @@
             
             const enableStdDev = document.getElementById('enableStdDev');
             if (enableStdDev) enableStdDev.checked = false;
+            
+            const enableMAD = document.getElementById('enableMAD');
+            if (enableMAD) enableMAD.checked = false;
             
             const enableCloudiness = document.getElementById('enableCloudiness');
             if (enableCloudiness) enableCloudiness.checked = true;  // Enable cloudiness by default
@@ -4544,6 +4601,8 @@
                     pair_percentile: parseFloat(document.getElementById('pairPercentile')?.value || 10),
                     enable_std_dev: document.getElementById('enableStdDev')?.checked || false,
                     std_dev_multiplier: parseFloat(document.getElementById('stdDevMultiplier')?.value || 2.0),
+                    enable_mad: document.getElementById('enableMAD')?.checked || false,
+                    mad_multiplier: parseFloat(document.getElementById('madMultiplier')?.value || 3.0),
                     enable_cloudiness: document.getElementById('enableCloudiness')?.checked || false,
                     include_partly_cloudy: document.getElementById('includePartlyCloudy')?.checked || true,
                     include_mostly_cloudy: document.getElementById('includeMostlyCloudy')?.checked || true,
@@ -4681,6 +4740,9 @@
             const stdDevMultiplier = document.getElementById('stdDevMultiplier');
             if (stdDevMultiplier) stdDevMultiplier.value = 2.0;
             
+            const madMultiplier = document.getElementById('madMultiplier');
+            if (madMultiplier) madMultiplier.value = 3.0;
+            
             const clearBrightnessMin = document.getElementById('clearBrightnessMin');
             if (clearBrightnessMin) clearBrightnessMin.value = 120;
             
@@ -4718,6 +4780,9 @@
             
             const stdDevMultiplierValue = document.getElementById('stdDevMultiplierValue');
             if (stdDevMultiplierValue) stdDevMultiplierValue.textContent = '2.0σ';
+            
+            const madMultiplierValue = document.getElementById('madMultiplierValue');
+            if (madMultiplierValue) madMultiplierValue.textContent = '3.0*MAD';
             
             const clearBrightnessMinValue = document.getElementById('clearBrightnessMinValue');
             if (clearBrightnessMinValue) clearBrightnessMinValue.textContent = '120';

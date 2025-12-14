@@ -1,0 +1,422 @@
+[
+  {
+    "pair_name": "Problematic Pair (19.929 km/s)",
+    "image1": "20230423-112638_53238988145_o.jpg",
+    "image2": "20230423-112652_53238502736_o.jpg",
+    "image1_path": "photos-1/20230423-112638_53238988145_o.jpg",
+    "image2_path": "photos-1/20230423-112652_53238502736_o.jpg",
+    "timestamp": "2025-12-12T21:20:10.680146",
+    "default_parameters": {
+      "max_features": 1000,
+      "gsd": 12648,
+      "clear_brightness_min": 120,
+      "clear_contrast_min": 50,
+      "cloudy_brightness_max": 60,
+      "cloudy_contrast_max": 15
+    },
+    "time_difference": 14.0,
+    "image1_characteristics": {
+      "brightness": 129.0144922564362,
+      "contrast": 73.16642325595474,
+      "cloudiness": "clear"
+    },
+    "image2_characteristics": {
+      "brightness": 121.74779752867747,
+      "contrast": 74.33316887693535,
+      "cloudiness": "clear"
+    },
+    "overall_cloudiness": "clear",
+    "avg_brightness": 125.38114489255683,
+    "avg_contrast": 73.74979606644504,
+    "match_count": 212,
+    "pixel_distances": {
+      "min": 358.19845576447324,
+      "max": 3801.3864149682536,
+      "mean": 2205.9771528961255,
+      "median": 2329.3618195570643,
+      "std": 643.2819727793923,
+      "percentiles": {
+        "5": 717.1913492881757,
+        "25": 2006.7953316284666,
+        "50": 2329.3618195570643,
+        "75": 2587.081178463401,
+        "95": 3004.3006544114473
+      }
+    },
+    "speeds": {
+      "min": 3.2360671917921837,
+      "max": 34.34281098322748,
+      "mean": 19.92942787845014,
+      "median": 21.044120209826968,
+      "std": 5.811593136938394,
+      "percentiles": {
+        "5": 6.479311561283462,
+        "25": 18.12996239602632,
+        "50": 21.044120209826968,
+        "75": 23.372430532289357,
+        "95": 27.141710483568563
+      }
+    },
+    "speed_analysis": {
+      "expected_speed": 7.66,
+      "mean_speed": 19.92942787845014,
+      "speed_ratio": 2.6017529867428384,
+      "is_high": true,
+      "is_low": false
+    },
+    "issues": [],
+    "sample_keypoints": [
+      {
+        "index": 0,
+        "pixel_distance": 706.8976115147224,
+        "speed": 6.386314993170148,
+        "time_diff": 14.0,
+        "match_distance": 14.0
+      },
+      {
+        "index": 1,
+        "pixel_distance": 706.7515759970545,
+        "speed": 6.384995666579104,
+        "time_diff": 14.0,
+        "match_distance": 24.0
+      },
+      {
+        "index": 2,
+        "pixel_distance": 706.0634259457177,
+        "speed": 6.378778722401026,
+        "time_diff": 14.0,
+        "match_distance": 25.0
+      },
+      {
+        "index": 3,
+        "pixel_distance": 699.0001572334992,
+        "speed": 6.31496713477807,
+        "time_diff": 14.0,
+        "match_distance": 25.0
+      },
+      {
+        "index": 4,
+        "pixel_distance": 706.0848721045173,
+        "speed": 6.378972473127098,
+        "time_diff": 14.0,
+        "match_distance": 26.0
+      },
+      {
+        "index": 5,
+        "pixel_distance": 1972.1311880666904,
+        "speed": 17.816796619048215,
+        "time_diff": 14.0,
+        "match_distance": 29.0
+      },
+      {
+        "index": 6,
+        "pixel_distance": 3294.789240120418,
+        "speed": 29.76606736360218,
+        "time_diff": 14.0,
+        "match_distance": 31.0
+      },
+      {
+        "index": 7,
+        "pixel_distance": 707.9888639120234,
+        "speed": 6.396173679113766,
+        "time_diff": 14.0,
+        "match_distance": 31.0
+      },
+      {
+        "index": 8,
+        "pixel_distance": 1886.619072010867,
+        "speed": 17.044255730566746,
+        "time_diff": 14.0,
+        "match_distance": 32.0
+      },
+      {
+        "index": 9,
+        "pixel_distance": 2607.706377783816,
+        "speed": 23.558764475864077,
+        "time_diff": 14.0,
+        "match_distance": 33.0
+      }
+    ]
+  },
+  {
+    "pair_name": "Pair Before (8.322 km/s)",
+    "image1": "20230423-112624_53238989495_o.jpg",
+    "image2": "20230423-112638_53238988145_o.jpg",
+    "image1_path": "photos-1/20230423-112624_53238989495_o.jpg",
+    "image2_path": "photos-1/20230423-112638_53238988145_o.jpg",
+    "timestamp": "2025-12-12T21:20:12.414744",
+    "default_parameters": {
+      "max_features": 1000,
+      "gsd": 12648,
+      "clear_brightness_min": 120,
+      "clear_contrast_min": 50,
+      "cloudy_brightness_max": 60,
+      "cloudy_contrast_max": 15
+    },
+    "time_difference": 14.0,
+    "image1_characteristics": {
+      "brightness": 138.42610962965847,
+      "contrast": 69.85160041699685,
+      "cloudiness": "clear"
+    },
+    "image2_characteristics": {
+      "brightness": 129.0144922564362,
+      "contrast": 73.16642325595474,
+      "cloudiness": "clear"
+    },
+    "overall_cloudiness": "clear",
+    "avg_brightness": 133.72030094304733,
+    "avg_contrast": 71.50901183647579,
+    "match_count": 368,
+    "pixel_distances": {
+      "min": 63.52645683244132,
+      "max": 3532.3505703946053,
+      "mean": 921.2074039191174,
+      "median": 707.5587924272045,
+      "std": 605.3642877558007,
+      "percentiles": {
+        "5": 665.5462268744789,
+        "25": 698.4581005462378,
+        "50": 707.5587924272045,
+        "75": 715.5399671895934,
+        "95": 2591.249609599982
+      }
+    },
+    "speeds": {
+      "min": 0.5739161614405127,
+      "max": 31.912264295964974,
+      "mean": 8.322450889120711,
+      "median": 6.392288290442346,
+      "std": 5.469033936810977,
+      "percentiles": {
+        "5": 6.012734769648864,
+        "25": 6.310070039792012,
+        "50": 6.392288290442346,
+        "75": 6.464392503581413,
+        "95": 23.41008933015755
+      }
+    },
+    "speed_analysis": {
+      "expected_speed": 7.66,
+      "mean_speed": 8.322450889120711,
+      "speed_ratio": 1.0864818393107978,
+      "is_high": false,
+      "is_low": false
+    },
+    "issues": [
+      "High speed variance (many outliers)",
+      "Very large pixel distances (bad matches)"
+    ],
+    "sample_keypoints": [
+      {
+        "index": 0,
+        "pixel_distance": 703.5583651058115,
+        "speed": 6.3561472870416456,
+        "time_diff": 14.0,
+        "match_distance": 8.0
+      },
+      {
+        "index": 1,
+        "pixel_distance": 727.5209345427519,
+        "speed": 6.572631985783376,
+        "time_diff": 14.0,
+        "match_distance": 8.0
+      },
+      {
+        "index": 2,
+        "pixel_distance": 707.3698965247235,
+        "speed": 6.390581750889074,
+        "time_diff": 14.0,
+        "match_distance": 11.0
+      },
+      {
+        "index": 3,
+        "pixel_distance": 689.0344237966049,
+        "speed": 6.224933851556756,
+        "time_diff": 14.0,
+        "match_distance": 11.0
+      },
+      {
+        "index": 4,
+        "pixel_distance": 725.7719809758969,
+        "speed": 6.556831439559389,
+        "time_diff": 14.0,
+        "match_distance": 11.0
+      },
+      {
+        "index": 5,
+        "pixel_distance": 726.5937992503619,
+        "speed": 6.564255980656127,
+        "time_diff": 14.0,
+        "match_distance": 11.0
+      },
+      {
+        "index": 6,
+        "pixel_distance": 725.6003826656303,
+        "speed": 6.555281171396351,
+        "time_diff": 14.0,
+        "match_distance": 11.0
+      },
+      {
+        "index": 7,
+        "pixel_distance": 727.4212281013984,
+        "speed": 6.571731209304633,
+        "time_diff": 14.0,
+        "match_distance": 11.0
+      },
+      {
+        "index": 8,
+        "pixel_distance": 706.4991153568418,
+        "speed": 6.38271486502381,
+        "time_diff": 14.0,
+        "match_distance": 12.0
+      },
+      {
+        "index": 9,
+        "pixel_distance": 725.7728657481492,
+        "speed": 6.556839432844709,
+        "time_diff": 14.0,
+        "match_distance": 12.0
+      }
+    ]
+  },
+  {
+    "pair_name": "Pair After (7.338 km/s)",
+    "image1": "20230423-112652_53238502736_o.jpg",
+    "image2": "20230423-112706_53238502731_o.jpg",
+    "image1_path": "photos-1/20230423-112652_53238502736_o.jpg",
+    "image2_path": "photos-1/20230423-112706_53238502731_o.jpg",
+    "timestamp": "2025-12-12T21:20:13.720203",
+    "default_parameters": {
+      "max_features": 1000,
+      "gsd": 12648,
+      "clear_brightness_min": 120,
+      "clear_contrast_min": 50,
+      "cloudy_brightness_max": 60,
+      "cloudy_contrast_max": 15
+    },
+    "time_difference": 14.0,
+    "image1_characteristics": {
+      "brightness": 121.74779752867747,
+      "contrast": 74.33316887693535,
+      "cloudiness": "clear"
+    },
+    "image2_characteristics": {
+      "brightness": 127.84461940724593,
+      "contrast": 76.21876428724549,
+      "cloudiness": "clear"
+    },
+    "overall_cloudiness": "clear",
+    "avg_brightness": 124.79620846796169,
+    "avg_contrast": 75.27596658209042,
+    "match_count": 332,
+    "pixel_distances": {
+      "min": 174.88532001405233,
+      "max": 1830.0416405621509,
+      "mean": 812.2090132168676,
+      "median": 783.375276699584,
+      "std": 219.19233248768498,
+      "percentiles": {
+        "5": 481.9872693374212,
+        "25": 763.1478438105663,
+        "50": 783.375276699584,
+        "75": 801.9634353919961,
+        "95": 1234.1677610741608
+      }
+    },
+    "speeds": {
+      "min": 1.5799639482412384,
+      "max": 16.533119049878632,
+      "mean": 7.337728285119245,
+      "median": 7.07723607121167,
+      "std": 1.980246158074457,
+      "percentiles": {
+        "5": 4.354410701842646,
+        "25": 6.8944956632257455,
+        "50": 7.07723607121167,
+        "75": 7.245166807741405,
+        "95": 11.149824172904276
+      }
+    },
+    "speed_analysis": {
+      "expected_speed": 7.66,
+      "mean_speed": 7.337728285119245,
+      "speed_ratio": 0.9579279745586481,
+      "is_high": false,
+      "is_low": false
+    },
+    "issues": [],
+    "sample_keypoints": [
+      {
+        "index": 0,
+        "pixel_distance": 796.8221273166412,
+        "speed": 7.198718761643484,
+        "time_diff": 14.0,
+        "match_distance": 12.0
+      },
+      {
+        "index": 1,
+        "pixel_distance": 793.7597736111356,
+        "speed": 7.171052583309746,
+        "time_diff": 14.0,
+        "match_distance": 19.0
+      },
+      {
+        "index": 2,
+        "pixel_distance": 776.720210766162,
+        "speed": 7.017112304121727,
+        "time_diff": 14.0,
+        "match_distance": 19.0
+      },
+      {
+        "index": 3,
+        "pixel_distance": 782.1274518983208,
+        "speed": 7.065962865435687,
+        "time_diff": 14.0,
+        "match_distance": 19.0
+      },
+      {
+        "index": 4,
+        "pixel_distance": 783.9632219187414,
+        "speed": 7.082547736305886,
+        "time_diff": 14.0,
+        "match_distance": 21.0
+      },
+      {
+        "index": 5,
+        "pixel_distance": 791.294287637945,
+        "speed": 7.148778678603377,
+        "time_diff": 14.0,
+        "match_distance": 22.0
+      },
+      {
+        "index": 6,
+        "pixel_distance": 781.8986752099216,
+        "speed": 7.063896031467921,
+        "time_diff": 14.0,
+        "match_distance": 22.0
+      },
+      {
+        "index": 7,
+        "pixel_distance": 778.370091922859,
+        "speed": 7.032017801885944,
+        "time_diff": 14.0,
+        "match_distance": 23.0
+      },
+      {
+        "index": 8,
+        "pixel_distance": 788.3509452562311,
+        "speed": 7.122187682572007,
+        "time_diff": 14.0,
+        "match_distance": 23.0
+      },
+      {
+        "index": 9,
+        "pixel_distance": 780.1654522464638,
+        "speed": 7.048237600009481,
+        "time_diff": 14.0,
+        "match_distance": 23.0
+      }
+    ]
+  }
+]

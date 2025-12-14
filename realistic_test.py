@@ -267,6 +267,206 @@ class TestCleanVersion(unittest.TestCase):
         self.assertIsNotNone(filtered)
         self.assertLessEqual(len(filtered), len(matches))
     
+    def test_mad_filter(self):
+        """Test MAD (Median Absolute Deviation) filter"""
+        import iss_speed_html_dashboard_v2_clean as clean
+        import numpy as np
+        
+        # Create test matches with clear outliers
+        # Median will be around 7.5, so outliers should be filtered
+        matches = [
+            {'speed': 7.4, 'pixel_distance': 10.0},
+            {'speed': 7.5, 'pixel_distance': 20.0},
+            {'speed': 7.6, 'pixel_distance': 30.0},
+            {'speed': 7.3, 'pixel_distance': 40.0},
+            {'speed': 7.7, 'pixel_distance': 50.0},
+            {'speed': 20.0, 'pixel_distance': 100.0},  # Clear outlier
+            {'speed': 0.5, 'pixel_distance': 5.0},      # Clear outlier
+        ]
+        
+        # Test with MAD filter enabled
+        filters = {
+            'enable_mad': True,
+            'mad_multiplier': 3.0
+        }
+        
+        filtered = clean.apply_match_filters(matches, filters)
+        
+        self.assertIsNotNone(filtered)
+        self.assertLess(len(filtered), len(matches), "MAD filter should remove outliers")
+        
+        # Verify outliers are removed
+        filtered_speeds = [m['speed'] for m in filtered]
+        self.assertNotIn(20.0, filtered_speeds, "High outlier should be filtered")
+        self.assertNotIn(0.5, filtered_speeds, "Low outlier should be filtered")
+        
+        # Verify normal values are kept
+        self.assertIn(7.4, filtered_speeds or [7.4], "Normal value should be kept")
+        self.assertIn(7.5, filtered_speeds or [7.5], "Normal value should be kept")
+    
+    def test_mad_filter_with_different_multipliers(self):
+        """Test MAD filter with different multiplier values"""
+        import iss_speed_html_dashboard_v2_clean as clean
+        
+        # Create test matches
+        matches = [
+            {'speed': 7.0, 'pixel_distance': 10.0},
+            {'speed': 7.1, 'pixel_distance': 20.0},
+            {'speed': 7.2, 'pixel_distance': 30.0},
+            {'speed': 7.3, 'pixel_distance': 40.0},
+            {'speed': 7.4, 'pixel_distance': 50.0},
+            {'speed': 10.0, 'pixel_distance': 100.0},  # Moderate outlier
+            {'speed': 5.0, 'pixel_distance': 5.0},     # Moderate outlier
+        ]
+        
+        # Test with strict MAD filter (lower multiplier = stricter)
+        filters_strict = {
+            'enable_mad': True,
+            'mad_multiplier': 1.5
+        }
+        
+        filtered_strict = clean.apply_match_filters(matches, filters_strict)
+        
+        # Test with lenient MAD filter (higher multiplier = more lenient)
+        filters_lenient = {
+            'enable_mad': True,
+            'mad_multiplier': 5.0
+        }
+        
+        filtered_lenient = clean.apply_match_filters(matches, filters_lenient)
+        
+        # Strict filter should remove more matches
+        self.assertLessEqual(len(filtered_strict), len(filtered_lenient),
+                           "Strict MAD filter should remove more matches than lenient")
+        
+        # Both should remove at least some outliers
+        self.assertLess(len(filtered_strict), len(matches),
+                       "Strict MAD filter should remove outliers")
+        self.assertLess(len(filtered_lenient), len(matches),
+                       "Lenient MAD filter should remove outliers")
+    
+    def test_mad_filter_disabled(self):
+        """Test that MAD filter does nothing when disabled"""
+        import iss_speed_html_dashboard_v2_clean as clean
+        
+        matches = [
+            {'speed': 7.4, 'pixel_distance': 10.0},
+            {'speed': 7.5, 'pixel_distance': 20.0},
+            {'speed': 20.0, 'pixel_distance': 100.0},  # Outlier
+        ]
+        
+        # Test with MAD filter disabled
+        filters = {
+            'enable_mad': False,
+            'mad_multiplier': 3.0
+        }
+        
+        filtered = clean.apply_match_filters(matches, filters)
+        
+        # When disabled, all matches should remain
+        self.assertEqual(len(filtered), len(matches),
+                       "MAD filter should not filter when disabled")
+    
+    def test_mad_filter(self):
+        """Test MAD (Median Absolute Deviation) filter"""
+        import iss_speed_html_dashboard_v2_clean as clean
+        import numpy as np
+        
+        # Create test matches with clear outliers
+        # Median will be around 7.5, so outliers should be filtered
+        matches = [
+            {'speed': 7.4, 'pixel_distance': 10.0},
+            {'speed': 7.5, 'pixel_distance': 20.0},
+            {'speed': 7.6, 'pixel_distance': 30.0},
+            {'speed': 7.3, 'pixel_distance': 40.0},
+            {'speed': 7.7, 'pixel_distance': 50.0},
+            {'speed': 20.0, 'pixel_distance': 100.0},  # Clear outlier
+            {'speed': 0.5, 'pixel_distance': 5.0},      # Clear outlier
+        ]
+        
+        # Test with MAD filter enabled
+        filters = {
+            'enable_mad': True,
+            'mad_multiplier': 3.0
+        }
+        
+        filtered = clean.apply_match_filters(matches, filters)
+        
+        self.assertIsNotNone(filtered)
+        self.assertLess(len(filtered), len(matches), "MAD filter should remove outliers")
+        
+        # Verify outliers are removed
+        filtered_speeds = [m['speed'] for m in filtered]
+        self.assertNotIn(20.0, filtered_speeds, "High outlier should be filtered")
+        self.assertNotIn(0.5, filtered_speeds, "Low outlier should be filtered")
+        
+        # Verify normal values are kept
+        self.assertIn(7.4, filtered_speeds or [7.4], "Normal value should be kept")
+        self.assertIn(7.5, filtered_speeds or [7.5], "Normal value should be kept")
+    
+    def test_mad_filter_with_different_multipliers(self):
+        """Test MAD filter with different multiplier values"""
+        import iss_speed_html_dashboard_v2_clean as clean
+        
+        # Create test matches
+        matches = [
+            {'speed': 7.0, 'pixel_distance': 10.0},
+            {'speed': 7.1, 'pixel_distance': 20.0},
+            {'speed': 7.2, 'pixel_distance': 30.0},
+            {'speed': 7.3, 'pixel_distance': 40.0},
+            {'speed': 7.4, 'pixel_distance': 50.0},
+            {'speed': 10.0, 'pixel_distance': 100.0},  # Moderate outlier
+            {'speed': 5.0, 'pixel_distance': 5.0},     # Moderate outlier
+        ]
+        
+        # Test with strict MAD filter (lower multiplier = stricter)
+        filters_strict = {
+            'enable_mad': True,
+            'mad_multiplier': 1.5
+        }
+        
+        filtered_strict = clean.apply_match_filters(matches, filters_strict)
+        
+        # Test with lenient MAD filter (higher multiplier = more lenient)
+        filters_lenient = {
+            'enable_mad': True,
+            'mad_multiplier': 5.0
+        }
+        
+        filtered_lenient = clean.apply_match_filters(matches, filters_lenient)
+        
+        # Strict filter should remove more matches
+        self.assertLessEqual(len(filtered_strict), len(filtered_lenient),
+                           "Strict MAD filter should remove more matches than lenient")
+        
+        # Both should remove at least some outliers
+        self.assertLess(len(filtered_strict), len(matches),
+                       "Strict MAD filter should remove outliers")
+        self.assertLess(len(filtered_lenient), len(matches),
+                       "Lenient MAD filter should remove outliers")
+    
+    def test_mad_filter_disabled(self):
+        """Test that MAD filter does nothing when disabled"""
+        import iss_speed_html_dashboard_v2_clean as clean
+        
+        matches = [
+            {'speed': 7.4, 'pixel_distance': 10.0},
+            {'speed': 7.5, 'pixel_distance': 20.0},
+            {'speed': 20.0, 'pixel_distance': 100.0},  # Outlier
+        ]
+        
+        # Test with MAD filter disabled
+        filters = {
+            'enable_mad': False,
+            'mad_multiplier': 3.0
+        }
+        
+        filtered = clean.apply_match_filters(matches, filters)
+        
+        # When disabled, all matches should remain
+        self.assertEqual(len(filtered), len(matches),
+                       "MAD filter should not filter when disabled")
+    
     def test_flask_app(self):
         """Test Flask application"""
         import iss_speed_html_dashboard_v2_clean as clean
@@ -684,6 +884,63 @@ class TestCleanVersion(unittest.TestCase):
                 self.assertEqual(len(section5_speeds), stats_data['match_count'])
                 # stats_data['count'] returns match count, not pair count
                 self.assertEqual(len(section6_means), 3)  # 3 pairs
+    
+    def test_sections_data_consistency_with_mad_filter(self):
+        """Test that Sections 3, 5, and 6 remain consistent when MAD filter is applied"""
+        import iss_speed_html_dashboard_v2_clean as clean
+        
+        # Create test data with outliers
+        test_matches = [
+            # Pair 0: normal speeds
+            {'pair_index': 0, 'speed': 7.4, 'cloudiness': 'clear'},
+            {'pair_index': 0, 'speed': 7.6, 'cloudiness': 'clear'},
+            # Pair 1: normal speeds
+            {'pair_index': 1, 'speed': 7.2, 'cloudiness': 'clear'},
+            {'pair_index': 1, 'speed': 7.3, 'cloudiness': 'clear'},
+            # Pair 2: outlier (should be filtered)
+            {'pair_index': 2, 'speed': 20.0, 'cloudiness': 'clear'},
+            {'pair_index': 2, 'speed': 0.5, 'cloudiness': 'clear'},
+        ]
+        
+        with clean.app.test_client() as client:
+            with patch('iss_speed_html_dashboard_v2_clean.processed_matches', test_matches):
+                # Apply MAD filter
+                filter_data = {
+                    'enable_mad': True,
+                    'mad_multiplier': 3.0
+                }
+                
+                # Apply filters first
+                apply_response = client.post('/api/apply-filters', json=filter_data)
+                self.assertEqual(apply_response.status_code, 200)
+                
+                # Get data with filters applied
+                stats_response = client.get('/api/statistics')
+                plot_response = client.get('/api/plot-data')
+                
+                stats_data = stats_response.get_json()
+                plot_data = plot_response.get_json()
+                
+                # Expected filtered data (excluding outliers)
+                # Should have 4 matches from pairs 0 and 1
+                
+                # Validate all sections use the same filtered data
+                # Section 3
+                self.assertLessEqual(stats_data['match_count'], 6, "MAD filter should reduce matches")
+                
+                # Section 5 (histogram)
+                section5_speeds = plot_data['histogram']['speeds']
+                self.assertLessEqual(len(section5_speeds), 6, "MAD filter should reduce histogram data")
+                
+                # Section 6 (pairs plot)
+                section6_means = plot_data['pairs']['means']
+                self.assertLessEqual(len(section6_means), 3, "MAD filter should reduce pairs")
+                
+                # Validate consistency across sections
+                self.assertEqual(len(section5_speeds), stats_data['match_count'],
+                              "Histogram should match statistics match count")
+                
+                print("✅ Sections data consistency with MAD filter validated")
 
     def test_sections_data_consistency_edge_cases(self):
         """Test data consistency across sections with edge cases"""

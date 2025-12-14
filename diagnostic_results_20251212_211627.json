@@ -1,0 +1,336 @@
+[
+  {
+    "pair_name": "Problematic Pair (19.929 km/s)",
+    "image1": "20230423-112638_53238988145_o.jpg",
+    "image2": "20230423-112652_53238502736_o.jpg",
+    "image1_path": "photos-1/20230423-112638_53238988145_o.jpg",
+    "image2_path": "photos-1/20230423-112652_53238502736_o.jpg",
+    "timestamp": "2025-12-12T21:15:53.296025",
+    "default_parameters": {
+      "max_features": 1000,
+      "gsd": 12648,
+      "clear_brightness_min": 120,
+      "clear_contrast_min": 50,
+      "cloudy_brightness_max": 60,
+      "cloudy_contrast_max": 15
+    },
+    "time_difference": 14.0,
+    "image1_characteristics": {
+      "brightness": 129.0144922564362,
+      "contrast": 73.16642325595474,
+      "cloudiness": "clear"
+    },
+    "image2_characteristics": {
+      "brightness": 121.74779752867747,
+      "contrast": 74.33316887693535,
+      "cloudiness": "clear"
+    },
+    "overall_cloudiness": "clear",
+    "avg_brightness": 125.38114489255683,
+    "avg_contrast": 73.74979606644504,
+    "match_count": 7,
+    "pixel_distances": {
+      "min": 643.2101452251505,
+      "max": 2574.123043649182,
+      "mean": 1155.7354548166625,
+      "median": 710.401454285663,
+      "std": 760.071472405803,
+      "percentiles": {
+        "5": 643.2101452251505,
+        "25": 670.3175755441406,
+        "50": 710.401454285663,
+        "75": 1410.8891947341804,
+        "95": 2433.88424217529
+      }
+    },
+    "speeds": {
+      "min": 5.810944226291217,
+      "max": 23.255363040053464,
+      "mean": 10.441244308943677,
+      "median": 6.4179697098607615,
+      "std": 6.866702844991854,
+      "percentiles": {
+        "5": 5.810944226291217,
+        "25": 6.055840496773064,
+        "50": 6.4179697098607615,
+        "75": 12.746376096427081,
+        "95": 21.988405639309335
+      }
+    },
+    "speed_analysis": {
+      "expected_speed": 7.66,
+      "mean_speed": 10.441244308943677,
+      "speed_ratio": 1.3630867244051796,
+      "is_high": false,
+      "is_low": false
+    },
+    "issues": [
+      "High speed variance (many outliers)",
+      "Low match count"
+    ],
+    "sample_keypoints": [
+      {
+        "index": 0,
+        "pixel_distance": 710.401454285663,
+        "speed": 6.4179697098607615,
+        "time_diff": 14.0
+      },
+      {
+        "index": 1,
+        "pixel_distance": 715.1180173988172,
+        "speed": 6.460580488614457,
+        "time_diff": 14.0
+      },
+      {
+        "index": 2,
+        "pixel_distance": 697.4250058631307,
+        "speed": 6.300736767254912,
+        "time_diff": 14.0
+      },
+      {
+        "index": 3,
+        "pixel_distance": 2106.6603720695434,
+        "speed": 19.032171704239705,
+        "time_diff": 14.0
+      },
+      {
+        "index": 4,
+        "pixel_distance": 643.2101452251505,
+        "speed": 5.810944226291217,
+        "time_diff": 14.0
+      },
+      {
+        "index": 5,
+        "pixel_distance": 643.2101452251505,
+        "speed": 5.810944226291217,
+        "time_diff": 14.0
+      },
+      {
+        "index": 6,
+        "pixel_distance": 2574.123043649182,
+        "speed": 23.255363040053464,
+        "time_diff": 14.0
+      }
+    ]
+  },
+  {
+    "pair_name": "Pair Before (8.322 km/s)",
+    "image1": "20230423-112624_53238989495_o.jpg",
+    "image2": "20230423-112638_53238988145_o.jpg",
+    "image1_path": "photos-1/20230423-112624_53238989495_o.jpg",
+    "image2_path": "photos-1/20230423-112638_53238988145_o.jpg",
+    "timestamp": "2025-12-12T21:16:05.701210",
+    "default_parameters": {
+      "max_features": 1000,
+      "gsd": 12648,
+      "clear_brightness_min": 120,
+      "clear_contrast_min": 50,
+      "cloudy_brightness_max": 60,
+      "cloudy_contrast_max": 15
+    },
+    "time_difference": 14.0,
+    "image1_characteristics": {
+      "brightness": 138.42610962965847,
+      "contrast": 69.85160041699685,
+      "cloudiness": "clear"
+    },
+    "image2_characteristics": {
+      "brightness": 129.0144922564362,
+      "contrast": 73.16642325595474,
+      "cloudiness": "clear"
+    },
+    "overall_cloudiness": "clear",
+    "avg_brightness": 133.72030094304733,
+    "avg_contrast": 71.50901183647579,
+    "match_count": 8,
+    "pixel_distances": {
+      "min": 704.867427285412,
+      "max": 769.4918641456727,
+      "mean": 722.3034324568184,
+      "median": 711.4792952092319,
+      "std": 23.480684521695277,
+      "percentiles": {
+        "5": 704.867427285412,
+        "25": 705.3318073515353,
+        "50": 711.4792952092319,
+        "75": 725.9605666870972,
+        "95": 764.1439786653747
+      }
+    },
+    "speeds": {
+      "min": 6.367973728789921,
+      "max": 6.951809355510335,
+      "mean": 6.525495581224171,
+      "median": 6.4277072327188325,
+      "std": 0.2121312127360017,
+      "percentiles": {
+        "5": 6.367973728789921,
+        "25": 6.372169070987298,
+        "50": 6.4277072327188325,
+        "75": 6.558535176756003,
+        "95": 6.903495030114043
+      }
+    },
+    "speed_analysis": {
+      "expected_speed": 7.66,
+      "mean_speed": 6.525495581224171,
+      "speed_ratio": 0.8518923735279597,
+      "is_high": false,
+      "is_low": false
+    },
+    "issues": [
+      "Low match count"
+    ],
+    "sample_keypoints": [
+      {
+        "index": 0,
+        "pixel_distance": 769.4918641456727,
+        "speed": 6.951809355510335,
+        "time_diff": 14.0
+      },
+      {
+        "index": 1,
+        "pixel_distance": 716.5433584678558,
+        "speed": 6.473457427072456,
+        "time_diff": 14.0
+      },
+      {
+        "index": 2,
+        "pixel_distance": 754.2121913448213,
+        "speed": 6.813768425806644,
+        "time_diff": 14.0
+      },
+      {
+        "index": 3,
+        "pixel_distance": 704.867427285412,
+        "speed": 6.367973728789921,
+        "time_diff": 14.0
+      },
+      {
+        "index": 4,
+        "pixel_distance": 704.867427285412,
+        "speed": 6.367973728789921,
+        "time_diff": 14.0
+      },
+      {
+        "index": 5,
+        "pixel_distance": 709.5445269562101,
+        "speed": 6.410227983530104,
+        "time_diff": 14.0
+      },
+      {
+        "index": 6,
+        "pixel_distance": 705.4866007069097,
+        "speed": 6.373567518386424,
+        "time_diff": 14.0
+      },
+      {
+        "index": 7,
+        "pixel_distance": 713.4140634622537,
+        "speed": 6.445186481907561,
+        "time_diff": 14.0
+      }
+    ]
+  },
+  {
+    "pair_name": "Pair After (7.338 km/s)",
+    "image1": "20230423-112652_53238502736_o.jpg",
+    "image2": "20230423-112706_53238502731_o.jpg",
+    "image1_path": "photos-1/20230423-112652_53238502736_o.jpg",
+    "image2_path": "photos-1/20230423-112706_53238502731_o.jpg",
+    "timestamp": "2025-12-12T21:16:16.659852",
+    "default_parameters": {
+      "max_features": 1000,
+      "gsd": 12648,
+      "clear_brightness_min": 120,
+      "clear_contrast_min": 50,
+      "cloudy_brightness_max": 60,
+      "cloudy_contrast_max": 15
+    },
+    "time_difference": 14.0,
+    "image1_characteristics": {
+      "brightness": 121.74779752867747,
+      "contrast": 74.33316887693535,
+      "cloudiness": "clear"
+    },
+    "image2_characteristics": {
+      "brightness": 127.84461940724593,
+      "contrast": 76.21876428724549,
+      "cloudiness": "clear"
+    },
+    "overall_cloudiness": "clear",
+    "avg_brightness": 124.79620846796169,
+    "avg_contrast": 75.27596658209042,
+    "match_count": 5,
+    "pixel_distances": {
+      "min": 773.2975986423314,
+      "max": 1234.3845337349876,
+      "mean": 943.1157251782482,
+      "median": 782.0651074328825,
+      "std": 204.5907174883151,
+      "percentiles": {
+        "5": 774.1025659993642,
+        "25": 777.3224354274952,
+        "50": 782.0651074328825,
+        "75": 1148.508950653544,
+        "95": 1217.2094171186989
+      }
+    },
+    "speeds": {
+      "min": 6.9861914483058625,
+      "max": 11.15178255905723,
+      "mean": 8.520376922896059,
+      "median": 7.065399627722213,
+      "std": 1.8483309962801495,
+      "percentiles": {
+        "5": 6.99346375339997,
+        "25": 7.0225529737764,
+        "50": 7.065399627722213,
+        "75": 10.375958005618589,
+        "95": 10.9966176483695
+      }
+    },
+    "speed_analysis": {
+      "expected_speed": 7.66,
+      "mean_speed": 8.520376922896059,
+      "speed_ratio": 1.112320747114368,
+      "is_high": false,
+      "is_low": false
+    },
+    "issues": [
+      "Low match count"
+    ],
+    "sample_keypoints": [
+      {
+        "index": 0,
+        "pixel_distance": 782.0651074328825,
+        "speed": 7.065399627722213,
+        "time_diff": 14.0
+      },
+      {
+        "index": 1,
+        "pixel_distance": 777.3224354274952,
+        "speed": 7.0225529737764,
+        "time_diff": 14.0
+      },
+      {
+        "index": 2,
+        "pixel_distance": 773.2975986423314,
+        "speed": 6.9861914483058625,
+        "time_diff": 14.0
+      },
+      {
+        "index": 3,
+        "pixel_distance": 1148.508950653544,
+        "speed": 10.375958005618589,
+        "time_diff": 14.0
+      },
+      {
+        "index": 4,
+        "pixel_distance": 1234.3845337349876,
+        "speed": 11.15178255905723,
+        "time_diff": 14.0
+      }
+    ]
+  }
+]
