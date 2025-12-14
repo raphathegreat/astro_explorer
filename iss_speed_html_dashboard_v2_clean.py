@@ -891,24 +891,47 @@ def get_time_difference(image1_path, image2_path):
 def enhance_image_contrast(image, method='clahe', clip_limit=3.0, tile_size=(8,8)):
     """Enhance image contrast for better feature detection"""
     if method == 'clahe':
-        # Contrast Limited Adaptive Histogram Equalization
-        clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_size)
-        enhanced = clahe.apply(image)
+        # --- SAFER CLAHE (same behaviour, more robust inputs) ---
+
+        img = image
+
+        # If accidentally given a colour image, convert to grayscale
+        if img.ndim == 3 and img.shape[2] in (3, 4):
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        # CLAHE requires uint8
+        if img.dtype != np.uint8:
+            img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX)
+            img = img.astype(np.uint8)
+
+        # Ensure tile size is valid
+        tile_x = max(1, int(tile_size[0]))
+        tile_y = max(1, int(tile_size[1]))
+
+        clahe = cv2.createCLAHE(
+            clipLimit=float(clip_limit),
+            tileGridSize=(tile_x, tile_y)
+        )
+        enhanced = clahe.apply(img)
+
     elif method == 'histogram_eq':
         # Global histogram equalization
         enhanced = cv2.equalizeHist(image)
+
     elif method == 'gamma':
         # Gamma correction
         gamma = 1.5
         enhanced = np.power(image / 255.0, gamma) * 255.0
         enhanced = enhanced.astype(np.uint8)
+
     elif method == 'unsharp':
         # Unsharp masking
         gaussian = cv2.GaussianBlur(image, (0, 0), 2.0)
         enhanced = cv2.addWeighted(image, 1.5, gaussian, -0.5, 0)
+
     else:
         enhanced = image
-    
+
     return enhanced
 
 # GitHub Code Functions for Comparison
