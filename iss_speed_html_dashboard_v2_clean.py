@@ -191,6 +191,34 @@ CACHE_DIR = 'cache'
 if not os.path.exists(CACHE_DIR):
     os.makedirs(CACHE_DIR)
 
+# Debug output file for comparison with standalone code
+DEBUG_OUTPUT_FILE = 'dashboard_output.txt'
+
+def debug_print(message, clear_file=False):
+    """
+    Print to console and write to debug output file.
+    This allows automatic comparison with standalone code output.
+    """
+    # Print to console (normal behavior)
+    print(message)
+    
+    # Write to file
+    mode = 'w' if clear_file else 'a'
+    try:
+        with open(DEBUG_OUTPUT_FILE, mode, encoding='utf-8') as f:
+            f.write(message + '\n')
+    except Exception as e:
+        # Don't fail if file writing fails
+        pass
+
+def clear_debug_output():
+    """Clear the debug output file at the start of processing"""
+    try:
+        with open(DEBUG_OUTPUT_FILE, 'w') as f:
+            f.write('')  # Clear file
+    except Exception:
+        pass
+
 def calculate_image_properties(image_path):
     """Calculate contrast, brightness, and sharpness of an image"""
     try:
@@ -1702,7 +1730,9 @@ def apply_filters_to_raw_data(enable_percentile=False, pair_percentile=10,  # No
     pair_results = global_data['pair_results']
     pair_characteristics = global_data['pair_characteristics']
     
-    print(f"Debug: Applying filters to {len(raw_keypoints)} raw keypoints")
+    debug_print(f"\n{'='*60}")
+    debug_print(f"FILTERING DEBUG - Starting with {len(raw_keypoints)} matches")
+    debug_print(f"{'='*60}")
     
     # Start with all raw keypoints
     filtered_keypoints = raw_keypoints.copy()
@@ -1782,15 +1812,28 @@ def apply_filters_to_raw_data(enable_percentile=False, pair_percentile=10,  # No
             bottom_threshold = np.percentile(speeds, keypoint_percentile_bottom)
             top_threshold = np.percentile(speeds, 100 - keypoint_percentile_top)
             
-            print(f"Debug: Step {step} - Keypoint percentile filter - removing bottom {keypoint_percentile_bottom}% and top {keypoint_percentile_top}%")
-            print(f"Debug: Step {step} - Bottom threshold: {bottom_threshold:.3f} km/s, Top threshold: {top_threshold:.3f} km/s")
-            print(f"Debug: Step {step} - Before keypoint filtering: {len(filtered_keypoints)} keypoints")
+            debug_print(f"\n📊 PERCENTILE FILTER:")
+            debug_print(f"   Bottom percentile: {keypoint_percentile_bottom}%")
+            debug_print(f"   Top percentile: {keypoint_percentile_top}%")
+            debug_print(f"   Bottom threshold: {bottom_threshold:.6f} km/s")
+            debug_print(f"   Top threshold: {top_threshold:.6f} km/s")
+            debug_print(f"   Speed range before: {min(speeds):.6f} to {max(speeds):.6f} km/s")
+            debug_print(f"   Matches before percentile filter: {len(filtered_keypoints)}")
             
             # Keep only keypoints within the percentile range
             filtered_keypoints = [kp for kp in filtered_keypoints 
                                 if bottom_threshold <= kp['speed'] <= top_threshold]
             
-            print(f"Debug: Step {step} - After keypoint filtering: {len(filtered_keypoints)} keypoints")
+            debug_print(f"   Matches after percentile filter: {len(filtered_keypoints)}")
+            keep_fraction = (100 - keypoint_percentile_bottom - keypoint_percentile_top) / 100.0
+            debug_print(f"   Expected to keep: {len(speeds) * keep_fraction:.1f} matches (top {keep_fraction*100}%)")
+            
+            if filtered_keypoints:
+                filtered_speeds = [kp['speed'] for kp in filtered_keypoints]
+                debug_print(f"   Speed range after: {min(filtered_speeds):.6f} to {max(filtered_speeds):.6f} km/s")
+                # Count how many matches are at exactly the threshold
+                at_threshold = sum(1 for s in filtered_speeds if abs(s - bottom_threshold) < 1e-10)
+                debug_print(f"   Matches at threshold: {at_threshold}")
             
         elif filter_type == 'percentile' and enable_percentile:
             # Apply minimum matches filtering to pairs
@@ -1802,19 +1845,34 @@ def apply_filters_to_raw_data(enable_percentile=False, pair_percentile=10,  # No
             if pair_counts:
                 # Use minimum match count instead of percentile
                 min_matches = pair_percentile  # Now represents minimum matches, not percentile
+                
+                debug_print(f"\n📊 MINIMUM MATCHES FILTER:")
+                debug_print(f"   Minimum matches required per pair: {min_matches}")
+                debug_print(f"   Pairs before filtering: {len(pair_counts)}")
+                debug_print(f"   Match counts per pair:")
+                for pair_idx, count in sorted(pair_counts.items()):
+                    status = "✅" if count >= min_matches else "❌"
+                    debug_print(f"      {status} Pair {pair_idx}: {count} matches")
+                
                 pairs_to_keep = [pair_num for pair_num, count in pair_counts.items() if count >= min_matches]
                 
                 # Safety check: ensure we keep at least 3 pairs or 50% of pairs, whichever is smaller
                 min_pairs_to_keep = min(3, max(1, len(pair_counts) // 2))
+                safety_activated = False
                 if len(pairs_to_keep) < min_pairs_to_keep and len(pair_counts) >= min_pairs_to_keep:
                     sorted_pairs = sorted(pair_counts.items(), key=lambda x: x[1], reverse=True)
                     pairs_to_keep = [pair_num for pair_num, count in sorted_pairs[:min_pairs_to_keep]]
-                    print(f"Debug: Step {step} - Safety check activated - keeping top {min_pairs_to_keep} pairs instead")
+                    safety_activated = True
+                    debug_print(f"   ⚠️  Safety check activated - keeping top {min_pairs_to_keep} pairs (by match count)")
+                    debug_print(f"   Pairs kept by safety check: {pairs_to_keep}")
                 
-                print(f"Debug: Step {step} - Pair filtering - min_matches={min_matches}, pairs_before={len(pair_counts)}, pairs_after={len(pairs_to_keep)}")
+                debug_print(f"   Pairs after filtering: {len(pairs_to_keep)}")
+                debug_print(f"   Pairs kept: {pairs_to_keep}")
                 
                 # Filter keypoints to only include pairs above threshold
                 filtered_keypoints = [kp for kp in filtered_keypoints if kp['pair_num'] in pairs_to_keep]
+                
+                debug_print(f"   Matches after minimum matches filter: {len(filtered_keypoints)}")
             else:
                 print(f"Debug: Step {step} - No pair counts available, using all {len(filtered_keypoints)} keypoints")
                 
@@ -1895,6 +1953,10 @@ def apply_filters_to_raw_data(enable_percentile=False, pair_percentile=10,  # No
             print(f"Debug: Step {step} - After cloudiness filter (partly: {include_partly_cloudy}, mostly: {include_mostly_cloudy}): {len(filtered_keypoints)} keypoints")
     
     final_keypoints = filtered_keypoints
+    
+    print(f"\n{'='*60}")
+    print(f"FILTERING COMPLETE - Final count: {len(final_keypoints)} matches")
+    print(f"{'='*60}\n")
     
     # Update pair characteristics with existing classifications
     for kp in final_keypoints:
@@ -2384,6 +2446,9 @@ def process_range():
         def process_range_thread():
             global processed_matches, processing_status, current_filtered_matches, current_filters, cache_cleared_by_user
             
+            # Clear debug output file at the start of processing
+            clear_debug_output()
+            
             try:
                 # Set the enhancement method for the process_image_pair function
                 process_image_pair.enhancement_method = contrast_enhancement
@@ -2430,6 +2495,8 @@ def process_range():
                             pair_cloudiness = 'mostly cloudy'
                     
                     # Process the pair
+                    # Set current pair number for debug output
+                    process_image_pair.current_pair_num = i
                     matches = process_image_pair(image1_path, image2_path, algorithm, use_flann, use_ransac_homography, 
                                                ransac_threshold, ransac_min_matches, max_features)
                     
@@ -2480,6 +2547,7 @@ def process_range():
                 # Summary of processing
                 if processed_matches:
                     print(f"📊 Processing complete: {len(processed_matches)} total matches from {total_pairs} pairs")
+                    debug_print(f"Rows before filtering: {len(processed_matches)}")
                 
                 # Save results to cache
                 print(f"💾 Saving {len(processed_matches)} matches to cache...")
@@ -2770,6 +2838,7 @@ def apply_filters():
         # Apply filters to processed_matches (ORIGINAL DATA - never overwritten)
         data_logger.info(f"🔄 PRESERVING ORIGINAL DATA: {len(processed_matches)} matches (never overwritten)")
         data_logger.info(f"🔄 ABOUT TO APPLY FILTERS: current_filters = {current_filters}")
+        debug_print(f"Rows before filtering: {len(processed_matches)}")
         filtered_matches = apply_match_filters(processed_matches, current_filters)
         data_logger.info(f"🔄 FILTERED DATA: {len(filtered_matches)} matches (temporary, not stored)")
         data_logger.info(f"🔄 FILTERING COMPLETE: {len(filtered_matches)}/{len(processed_matches)} matches remaining")
@@ -3566,6 +3635,11 @@ def process_image_pair(image1_path, image2_path, algorithm, use_flann, use_ransa
             if desc1 is None or desc2 is None:
                 return []
             
+            # Debug: Print feature counts (matching user's code format)
+            pair_num = getattr(process_image_pair, 'current_pair_num', '?')
+            debug_print(f"   Pair {pair_num}: Features detected - img1: {len(kp1)}, img2: {len(kp2)}")
+            debug_print(f"   Pair {pair_num}: Descriptors - img1: {desc1.shape if desc1 is not None else None}, img2: {desc2.shape if desc2 is not None else None}")
+            
             # Match features
             if use_flann:
                 # FLANN for ORB (using LSH)
@@ -3583,6 +3657,7 @@ def process_image_pair(image1_path, image2_path, algorithm, use_flann, use_ransa
                         if m.distance < 0.7 * n.distance:
                             good_matches.append(m)
                 matches = good_matches
+                debug_print(f"   Pair {pair_num}: Matches after FLANN + ratio test: {len(matches)}")
             else:
                 # Brute force for ORB
                 matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
@@ -3633,6 +3708,8 @@ def process_image_pair(image1_path, image2_path, algorithm, use_flann, use_ransa
         
         # Calculate speeds for each match
         match_results = []
+        MIN_SPEED_THRESHOLD = 1  # Ignore matches with speed <= 0.001 km/s (static features)
+        
         for match in matches:
             # Get coordinates
             pt1 = kp1[match.queryIdx].pt
@@ -3645,13 +3722,15 @@ def process_image_pair(image1_path, image2_path, algorithm, use_flann, use_ransa
             gsd = 12648  # Default GSD
             speed = calculate_speed_in_kmps(pixel_distance, gsd, time_diff)
             
-            match_results.append({
-                'speed': speed,
-                'pixel_distance': pixel_distance,
-                'match_distance': match.distance,
-                'pt1': pt1,
-                'pt2': pt2
-            })
+            # Filter out static features (speed <= threshold)
+            if speed > MIN_SPEED_THRESHOLD:
+                match_results.append({
+                    'speed': speed,
+                    'pixel_distance': pixel_distance,
+                    'match_distance': match.distance,
+                    'pt1': pt1,
+                    'pt2': pt2
+                })
         
         return match_results
         
@@ -3694,6 +3773,10 @@ def apply_match_filters(matches, filters):
     """Apply filters to matches - same filters as original dashboard (excluding GPS)"""
     filtered = matches.copy()
     
+    debug_print(f"\n{'='*60}")
+    debug_print(f"FILTERING DEBUG - Starting with {len(filtered)} matches")
+    debug_print(f"{'='*60}")
+    
     # Enforce mutual exclusivity: ML classification and cloudiness cannot both be enabled
     ml_enabled = filters.get('enable_ml_classification', False)
     cloudiness_enabled = filters.get('enable_cloudiness', False)
@@ -3715,8 +3798,27 @@ def apply_match_filters(matches, filters):
         bottom_threshold = np.percentile(speeds, keypoint_percentile_bottom)
         top_threshold = np.percentile(speeds, 100 - keypoint_percentile_top)
         
+        debug_print(f"\n📊 PERCENTILE FILTER:")
+        debug_print(f"   Bottom percentile: {keypoint_percentile_bottom}%")
+        debug_print(f"   Top percentile: {keypoint_percentile_top}%")
+        debug_print(f"   Bottom threshold: {bottom_threshold:.6f} km/s")
+        debug_print(f"   Top threshold: {top_threshold:.6f} km/s")
+        debug_print(f"   Speed range before: {min(speeds):.6f} to {max(speeds):.6f} km/s")
+        debug_print(f"   Matches before percentile filter: {len(filtered)}")
+        
         # Keep only matches within the percentile range
         filtered = [m for m in filtered if bottom_threshold <= m['speed'] <= top_threshold]
+        
+        debug_print(f"   Matches after percentile filter: {len(filtered)}")
+        keep_fraction = (100 - keypoint_percentile_bottom - keypoint_percentile_top) / 100.0
+        debug_print(f"   Expected to keep: {len(speeds) * keep_fraction:.1f} matches (top {keep_fraction*100}%)")
+        
+        if filtered:
+            filtered_speeds = [m['speed'] for m in filtered]
+            debug_print(f"   Speed range after: {min(filtered_speeds):.6f} to {max(filtered_speeds):.6f} km/s")
+            # Count how many matches are at exactly the threshold
+            at_threshold = sum(1 for s in filtered_speeds if abs(s - bottom_threshold) < 1e-10)
+            debug_print(f"   Matches at threshold: {at_threshold}")
     
     # Minimum matches filter (filter pairs by minimum keypoint count)
     if filters.get('enable_percentile', False) and len(filtered) > 0:
@@ -3729,17 +3831,34 @@ def apply_match_filters(matches, filters):
             pair_counts[pair_num] = pair_counts.get(pair_num, 0) + 1
         
         if pair_counts:
+            debug_print(f"\n📊 MINIMUM MATCHES FILTER:")
+            debug_print(f"   Minimum matches required per pair: {min_matches}")
+            debug_print(f"   Pairs before filtering: {len(pair_counts)}")
+            debug_print(f"   Match counts per pair:")
+            for pair_idx, count in sorted(pair_counts.items()):
+                status = "✅" if count >= min_matches else "❌"
+                debug_print(f"      {status} Pair {pair_idx}: {count} matches")
+            
             # Use minimum match count instead of percentile
             pairs_to_keep = [pair_num for pair_num, count in pair_counts.items() if count >= min_matches]
             
             # Safety check: ensure we keep at least 3 pairs or 50% of pairs, whichever is smaller
             min_pairs_to_keep = min(3, max(1, len(pair_counts) // 2))
+            safety_activated = False
             if len(pairs_to_keep) < min_pairs_to_keep and len(pair_counts) >= min_pairs_to_keep:
                 sorted_pairs = sorted(pair_counts.items(), key=lambda x: x[1], reverse=True)
                 pairs_to_keep = [pair_num for pair_num, _ in sorted_pairs[:min_pairs_to_keep]]
+                safety_activated = True
+                debug_print(f"   ⚠️  Safety check activated - keeping top {min_pairs_to_keep} pairs (by match count)")
+                debug_print(f"   Pairs kept by safety check: {pairs_to_keep}")
+            
+            debug_print(f"   Pairs after filtering: {len(pairs_to_keep)}")
+            debug_print(f"   Pairs kept: {pairs_to_keep}")
             
             # Filter matches to only include pairs above threshold
             filtered = [m for m in filtered if m['pair_index'] in pairs_to_keep]
+            
+            debug_print(f"   Matches after minimum matches filter: {len(filtered)}")
     
     # Standard deviation filter (outlier removal)
     if filters.get('enable_std_dev', False) and len(filtered) > 0:
@@ -3979,6 +4098,10 @@ def apply_match_filters(matches, filters):
     # Note: This filter needs to be applied during the initial processing phase
     # since it requires access to the original keypoints and matches
     # For now, we'll add a placeholder that could be implemented in the future
+    
+    debug_print(f"\n{'='*60}")
+    debug_print(f"FILTERING COMPLETE - Final count: {len(filtered)} matches")
+    debug_print(f"{'='*60}\n")
     
     return filtered
 
