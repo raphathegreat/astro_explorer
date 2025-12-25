@@ -886,32 +886,36 @@ def load_cache(cache_key):
     return load_v2_cache(cache_key)
 
 def get_time(image):
+    """Get time from EXIF datetime_original, including SubSecTimeOriginal if available."""
     with open(image, 'rb') as image_file:
         img = Image(image_file)
         time_str = img.get("datetime_original")
         time = datetime.strptime(time_str, '%Y:%m:%d %H:%M:%S')
+        
+        # Try to get SubSecTimeOriginal for millisecond precision
+        try:
+            subsec_str = img.get("subsec_time_original")
+            if subsec_str:
+                # Add milliseconds as timedelta
+                milliseconds = int(subsec_str)
+                from datetime import timedelta
+                time = time + timedelta(milliseconds=milliseconds)
+        except:
+            # SubSecTimeOriginal not available or not readable, use second precision
+            pass
+        
         return time
 
 def get_time_difference(image1_path, image2_path):
-    """Get time difference between two images in seconds, rounded to 3 decimal places for consistency"""
+    """Get time difference between two images in seconds, including SubSecTimeOriginal if available.
+    Rounded to 3 decimal places for consistency"""
     try:
-        with open(image1_path, 'rb') as f:
-            img1 = Image(f)
-        with open(image2_path, 'rb') as f:
-            img2 = Image(f)
+        # Use get_time which handles SubSecTimeOriginal automatically
+        datetime1 = get_time(image1_path)
+        datetime2 = get_time(image2_path)
         
-        if img1.has_exif and img2.has_exif:
-            datetime1_str = img1.datetime_original
-            datetime2_str = img2.datetime_original
-            
-            if datetime1_str and datetime2_str:
-                # Parse string datetime to datetime object
-                datetime1 = datetime.strptime(datetime1_str, '%Y:%m:%d %H:%M:%S')
-                datetime2 = datetime.strptime(datetime2_str, '%Y:%m:%d %H:%M:%S')
-                # Round to 3 decimal places for consistency in speed calculations
-                return round((datetime2 - datetime1).total_seconds(), 3)
-        
-        return 0.0
+        # Calculate difference and round to 3 decimal places for consistency
+        return round((datetime2 - datetime1).total_seconds(), 3)
     except Exception as e:
         print(f"Error getting time difference: {e}")
         return 0.0
@@ -964,11 +968,24 @@ def enhance_image_contrast(image, method='clahe', clip_limit=3.0, tile_size=(8,8
 
 # GitHub Code Functions for Comparison
 def github_get_time(image_path):
-    """Get the time an image was taken (GitHub version)"""
+    """Get the time an image was taken (GitHub version), including SubSecTimeOriginal if available"""
     with open(image_path, 'rb') as image_file:
         img = Image(image_file)
         time_string = img.get("datetime_original")
         time = datetime.strptime(time_string, '%Y:%m:%d %H:%M:%S')
+        
+        # Try to get SubSecTimeOriginal for millisecond precision
+        try:
+            subsec_str = img.get("subsec_time_original")
+            if subsec_str:
+                # Add milliseconds as timedelta
+                milliseconds = int(subsec_str)
+                from datetime import timedelta
+                time = time + timedelta(milliseconds=milliseconds)
+        except:
+            # SubSecTimeOriginal not available or not readable, use second precision
+            pass
+        
         return time
 
 def github_get_time_difference(image_1_path, image_2_path):
